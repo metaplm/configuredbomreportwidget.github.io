@@ -16,8 +16,8 @@ const cfg = {
             server: {
                 type: "https",
                 options: {
-                    key: "/home/mirac/work/certificates/serverkey.key",
-                    cert: "/home/mirac/work/certificates/servercert.crt"
+                    key: "./certificates/serverkey.key",
+                    cert: "./certificates/servercert.crt"
                 }
             },
             host: "0.0.0.0",

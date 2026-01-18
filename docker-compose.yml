@@ -8,8 +8,8 @@ services:
     ports:
       - "8894:8894"
     volumes:
-      # SSL sertifikaları için volume mount
-      - /home/mirac/work/certificates:/home/mirac/work/certificates:ro
+      # SSL sertifikaları için volume mount (proje klasöründen)
+      - ./certificates:/app/certificates:ro
       # Hot reload için tüm kaynak dosyalarını mount et
       - ./src:/app/src
       - ./webpack:/app/webpack

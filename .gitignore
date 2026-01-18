@@ -62,3 +62,5 @@ certificates/
 *.save
 *.bak
 *.backup
+# SSL Certificates (sensitive)
+certificates/
