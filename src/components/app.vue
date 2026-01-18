@@ -175,6 +175,7 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
+import config, { getCustomAttributesUrl, getBomExpandUrl } from '../config.js';
 
 const loading = ref(false);
 const loadingAttributes = ref(false);
@@ -350,7 +351,7 @@ const loadCustomAttributes = async () => {
   loadingAttributes.value = true;
   try {
     const response = await Platform3DSpace.call3DSpace({
-      url: '/resources/ParamWS/datamodel/listofattributesfortype?type=VPMReference&xrequestedwith=xmlhttprequest',
+      url: getCustomAttributesUrl(),
       method: 'GET',
       headers: {
         'Accept': 'application/json'
@@ -435,7 +436,7 @@ const expandBOM = async () => {
     };
 
     const response = await Platform3DSpace.call3DSpace({
-      url: '/cvservlet/progressiveexpand/v2?output_format=cvjson&tenant=OnPremise&xrequestedwith=xmlhttprequest',
+      url: getBomExpandUrl(),
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import Platform3DSpace from "../js/Platform3DSpace";
+import config, { getEcosystemUrl } from "../config.js";
 
 Vue.use(Vuex);
 
@@ -347,16 +348,11 @@ export const store = new Vuex.Store({
 
                     Platform3DSpace.call3DSpace({
                         method: "POST",
-                        url: "/resources/enorelnav/v2/navigate/getEcosystem?tenant=OnPremise&xrequestedwith=xmlhttprequest",
+                        url: getEcosystemUrl(),
                         type: "json",
                         headers: {
                             'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'Origin': 'https://3ddashboard25x.metaplm.com',
-                            'Referer': 'https://3ddashboard25x.metaplm.com/',
-                            'Sec-Fetch-Dest': 'empty',
-                            'Sec-Fetch-Mode': 'cors',
-                            'Sec-Fetch-Site': 'same-site'
+                            'Content-Type': 'application/json'
                         },
                         data: ecosystemRequest
                     })

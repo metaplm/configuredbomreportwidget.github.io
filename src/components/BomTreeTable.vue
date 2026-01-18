@@ -171,6 +171,7 @@
 import { ref, computed, watch } from 'vue';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import config from '../config.js';
 
 const props = defineProps({
   data: {
@@ -224,7 +225,7 @@ const onRowDragStart = (node, event) => {
     widgetId: 'BOMReportWidget',
     data: {
       items: [{
-        envId: 'OnPremise',
+        envId: config.envId,
         serviceId: '3DSpace',
         contextId: '',
         objectId: node.resourceid,
