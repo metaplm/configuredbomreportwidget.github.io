@@ -1,0 +1,10 @@
+{
+  "tenant": "OnPremise",
+  "envId": "OnPremise",
+  "attributeType": "VPMReference",
+  "endpoints": {
+    "bomExpand": "/cvservlet/progressiveexpand/v2",
+    "customAttributes": "/resources/ParamWS/datamodel/listofattributesfortype",
+    "ecosystem": "/resources/enorelnav/v2/navigate/getEcosystem"
+  }
+}

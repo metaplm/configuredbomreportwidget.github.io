@@ -3,41 +3,64 @@
     <!-- Toolbar -->
     <div class="tree-toolbar">
       <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" fill="currentColor"/></svg>
+        <svg v-if="!isSearching" class="search-icon" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" fill="currentColor"/></svg>
+        <v-progress-circular v-else indeterminate size="16" width="2" color="primary" class="search-spinner"></v-progress-circular>
         <input 
           v-model="searchQuery" 
           type="text" 
-          placeholder="Ara..." 
+          :placeholder="searchQuery.length === 1 ? 'En az 2 karakter...' : 'Ara...'" 
           class="search-input"
           @input="onSearchInput"
         />
+        <span v-if="searchQuery.length === 1" class="search-hint">+1</span>
         <button v-if="searchQuery" class="search-clear" @click="clearSearch" title="Temizle">
           <svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" fill="currentColor"/></svg>
         </button>
       </div>
       <div class="toolbar-actions">
-        <button class="toolbar-btn" @click="expandAll" title="Expand All">
-          <svg viewBox="0 0 24 24"><path d="M12,18.17L8.83,15L7.42,16.41L12,21L16.59,16.41L15.17,15M12,5.83L15.17,9L16.58,7.59L12,3L7.41,7.59L8.83,9L12,5.83Z" fill="currentColor"/></svg>
+        <button class="toolbar-btn expand-btn" @click="expandAll" :data-tooltip="isExpanding ? `${Math.round((expandProgress / expandTotal) * 100)}%` : 'Expand All'" :disabled="isExpanding">
+          <svg v-if="!isExpanding" viewBox="0 0 24 24"><path d="M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z" fill="currentColor"/></svg>
+          <div v-else class="expand-progress-wrapper">
+            <v-progress-circular 
+              indeterminate
+              size="20" 
+              width="2.5" 
+              color="primary"
+            ></v-progress-circular>
+            <span class="expand-percent">{{ expandTotal > 0 ? Math.round((expandProgress / expandTotal) * 100) : 0 }}</span>
+          </div>
         </button>
-        <button class="toolbar-btn" @click="collapseAll" title="Collapse All">
-          <svg viewBox="0 0 24 24"><path d="M12,9.17L15.17,6L16.58,7.41L12,12L7.41,7.41L8.83,6L12,9.17M12,14.83L8.83,18L7.42,16.59L12,12L16.59,16.59L15.17,18L12,14.83Z" fill="currentColor"/></svg>
+        <button class="toolbar-btn" @click="collapseAll" data-tooltip="Collapse All">
+          <svg viewBox="0 0 24 24"><path d="M19.5,3.09L15,7.59V4H13V11H20V9H16.41L20.91,4.5L19.5,3.09M4,13V15H7.59L3.09,19.5L4.5,20.91L9,16.41V20H11V13H4Z" fill="currentColor"/></svg>
         </button>
         <div class="toolbar-divider"></div>
-        <button class="toolbar-btn" @click="expandOneLevel" title="Expand One Level">
-          <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
+        <button class="toolbar-btn expand-btn" @click="expandOneLevel" :data-tooltip="isExpandingOne ? `${Math.round((expandOneProgress / expandOneTotal) * 100)}%` : 'Expand One Level'" :disabled="isExpandingOne">
+          <svg v-if="!isExpandingOne" viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
+          <div v-else class="expand-progress-wrapper">
+            <v-progress-circular 
+              indeterminate
+              size="20" 
+              width="2.5" 
+              color="primary"
+            ></v-progress-circular>
+            <span class="expand-percent">{{ expandOneTotal > 0 ? Math.round((expandOneProgress / expandOneTotal) * 100) : 0 }}</span>
+          </div>
         </button>
-        <button class="toolbar-btn" @click="collapseOneLevel" title="Collapse One Level">
+        <button class="toolbar-btn" @click="collapseOneLevel" data-tooltip="Collapse One Level">
           <svg viewBox="0 0 24 24"><path d="M19,13H5V11H19V13Z" fill="currentColor"/></svg>
         </button>
+        <button class="toolbar-btn" @click="emit('close')" data-tooltip="Close">
+          <svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" fill="currentColor"/></svg>
+        </button>
         <div class="toolbar-divider"></div>
-        <button class="toolbar-btn" @click="emit('open-columns')" title="Columns">
+        <button class="toolbar-btn" @click="emit('open-columns')" data-tooltip="Columns">
           <svg viewBox="0 0 24 24"><path d="M3,4H7V8H3V4M9,5V7H21V5H9M3,10H7V14H3V10M9,11V13H21V11H9M3,16H7V20H3V16M9,17V19H21V17H9" fill="currentColor"/></svg>
         </button>
         <div class="toolbar-divider"></div>
-        <button class="toolbar-btn" @click="exportToExcel" title="Export to Excel">
+        <button class="toolbar-btn" @click="exportToExcel" data-tooltip="Excel">
           <svg viewBox="0 0 24 24"><path d="M21.17 3.25Q21.5 3.25 21.76 3.5 22 3.74 22 4.08V19.92Q22 20.26 21.76 20.5 21.5 20.75 21.17 20.75H7.83Q7.5 20.75 7.24 20.5 7 20.26 7 19.92V17H2.83Q2.5 17 2.24 16.76 2 16.5 2 16.17V7.83Q2 7.5 2.24 7.24 2.5 7 2.83 7H7V4.08Q7 3.74 7.24 3.5 7.5 3.25 7.83 3.25M7 13.06L8.18 15.28H9.97L8 12.06L9.93 8.89H8.22L7.13 10.9L7.09 10.96L7.06 11.03Q6.8 10.5 6.5 9.96 6.25 9.43 5.97 8.89H4.16L6.05 12.08L4 15.28H5.78M13.88 19.5V17H8.25V19.5M13.88 15.75V12.63H12V15.75M13.88 11.38V8.25H12V11.38M13.88 7V4.5H8.25V7M20.75 19.5V17H15.13V19.5M20.75 15.75V12.63H15.13V15.75M20.75 11.38V8.25H15.13V11.38M20.75 7V4.5H15.13V7Z" fill="currentColor"/></svg>
         </button>
-        <button class="toolbar-btn" @click="printTable" title="Print">
+        <button class="toolbar-btn" @click="printTable" data-tooltip="Print">
           <svg viewBox="0 0 24 24"><path d="M18,3H6V7H18M19,12A1,1 0 0,1 18,11A1,1 0 0,1 19,10A1,1 0 0,1 20,11A1,1 0 0,1 19,12M16,19H8V14H16M19,8H5A3,3 0 0,0 2,11V17H6V21H18V17H22V11A3,3 0 0,0 19,8Z" fill="currentColor"/></svg>
         </button>
       </div>
@@ -146,6 +169,12 @@
                 {{ formatState(node['ds6w:status']) }}
               </v-chip>
             </span>
+            <!-- Boolean (True/False) -->
+            <span v-else-if="isBooleanValue(node[col.key])" class="chip-wrapper">
+              <v-chip size="x-small" :color="getBooleanColor(node[col.key])" variant="tonal">
+                {{ formatBooleanValue(node[col.key]) }}
+              </v-chip>
+            </span>
             <!-- Other -->
             <span v-else class="cell-text">
               {{ formatCellValue(node[col.key], col.key) }}
@@ -188,10 +217,19 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:selected-columns', 'open-columns']);
+const emit = defineEmits(['update:selected-columns', 'open-columns', 'close']);
 
 const treeData = ref([]);
 const searchQuery = ref('');
+const activeSearchQuery = ref(''); // Gerçek arama için kullanılan query
+const isSearching = ref(false);
+const isExpanding = ref(false);
+const expandProgress = ref(0);
+const expandTotal = ref(0);
+
+const isExpandingOne = ref(false);
+const expandOneProgress = ref(0);
+const expandOneTotal = ref(0);
 
 // Header drag state
 const headerDragIndex = ref(null);
@@ -207,7 +245,7 @@ const displayColumns = computed(() => {
       // Fallback labels for calculated fields
       const fallbackLabels = {
         '_qty': 'Qty',
-        '_subqty': 'SubQty',
+        '_subqty': 'Sub Qty',
         '_totalqty': 'Total Qty'
       };
       return { key, label: fallbackLabels[key] || key.split(':').pop() };
@@ -548,21 +586,57 @@ const expandParentsForSearch = (nodes, query, parentPath = []) => {
   return hasMatchingChild;
 };
 
+// Arama için debounce timeout
+let searchTimeout = null;
+
 // Arama input handler
 const onSearchInput = () => {
-  if (searchQuery.value) {
-    expandParentsForSearch(treeData.value, searchQuery.value);
+  // Önceki timeout'u temizle
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
   }
+  
+  const query = searchQuery.value?.trim() || '';
+  
+  // 2 karakterden az ise aramayı temizle
+  if (query.length < 2) {
+    activeSearchQuery.value = '';
+    isSearching.value = false;
+    return;
+  }
+  
+  // Loading başlat
+  isSearching.value = true;
+  
+  // Debounce ile arama yap (300ms)
+  searchTimeout = setTimeout(async () => {
+    // Parent node'ları genişlet
+    expandParentsForSearch(treeData.value, query);
+    
+    // Kısa bir bekleme (UI güncellemesi için)
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Aktif aramayı güncelle
+    activeSearchQuery.value = query;
+    
+    // Loading'i kapat
+    isSearching.value = false;
+  }, 300);
 };
 
 const clearSearch = () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
   searchQuery.value = '';
+  activeSearchQuery.value = '';
+  isSearching.value = false;
 };
 
 // Visible nodes (expanded state ve arama filtresine göre)
 const visibleNodes = computed(() => {
   const result = [];
-  const query = searchQuery.value?.trim();
+  const query = activeSearchQuery.value?.trim();
   
   const traverse = (nodes, parentMatches = false) => {
     if (!nodes || !Array.isArray(nodes)) return;
@@ -628,17 +702,54 @@ const toggleNode = (nodeToToggle) => {
 };
 
 // Expand All - tüm node'ları aç
-const expandAll = () => {
-  const expand = (nodes) => {
+// Async expand all - chunk'lar halinde işle
+const expandAll = async () => {
+  if (isExpanding.value) return;
+  
+  isExpanding.value = true;
+  expandProgress.value = 0;
+  
+  // Tüm expandable node'ları topla
+  const expandableNodes = [];
+  const collectExpandable = (nodes) => {
     if (!nodes) return;
     for (const node of nodes) {
+      if (node.children?.length && !node.expanded) {
+        expandableNodes.push(node);
+      }
       if (node.children?.length) {
-        node.expanded = true;
-        expand(node.children);
+        collectExpandable(node.children);
       }
     }
   };
-  expand(treeData.value);
+  collectExpandable(treeData.value);
+  
+  expandTotal.value = expandableNodes.length;
+  
+  // Chunk'lar halinde expand et (her 100 node'da bir yield)
+  const chunkSize = 100;
+  for (let i = 0; i < expandableNodes.length; i += chunkSize) {
+    const chunk = expandableNodes.slice(i, i + chunkSize);
+    for (const node of chunk) {
+      node.expanded = true;
+    }
+    
+    // Progress güncelle
+    expandProgress.value = Math.min(i + chunkSize, expandableNodes.length);
+    
+    // UI thread'ini serbest bırak
+    if (i + chunkSize < expandableNodes.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+  
+  // Tamamlandı
+  expandProgress.value = expandTotal.value;
+  await new Promise(resolve => setTimeout(resolve, 200)); // Kısa bir bekleme
+  
+  isExpanding.value = false;
+  expandProgress.value = 0;
+  expandTotal.value = 0;
 };
 
 // Collapse All - tüm node'ları kapat
@@ -655,23 +766,63 @@ const collapseAll = () => {
   collapse(treeData.value);
 };
 
-// Expand One Level - şu an görünen node'ların çocuklarını aç
-const expandOneLevel = () => {
-  const expandVisible = (nodes) => {
+// Expand One Level - şu an görünen node'ların çocuklarını aç (async)
+const expandOneLevel = async () => {
+  if (isExpandingOne.value) return;
+  
+  isExpandingOne.value = true;
+  expandOneProgress.value = 0;
+  
+  // Açılması gereken node'ları topla (kapalı olan ve çocukları olan, görünür olanlar)
+  const nodesToExpand = [];
+  const collectNodesToExpand = (nodes) => {
     if (!nodes) return;
     for (const node of nodes) {
       if (node.children?.length) {
         if (node.expanded) {
           // Bu node zaten açık, çocuklarına bak
-          expandVisible(node.children);
+          collectNodesToExpand(node.children);
         } else {
-          // Bu node kapalı ve çocukları var, aç
-          node.expanded = true;
+          // Bu node kapalı ve çocukları var, listeye ekle
+          nodesToExpand.push(node);
         }
       }
     }
   };
-  expandVisible(treeData.value);
+  collectNodesToExpand(treeData.value);
+  
+  expandOneTotal.value = nodesToExpand.length;
+  
+  // Eğer açılacak node yoksa hemen çık
+  if (nodesToExpand.length === 0) {
+    isExpandingOne.value = false;
+    return;
+  }
+  
+  // Chunk'lar halinde aç
+  const chunkSize = 50;
+  for (let i = 0; i < nodesToExpand.length; i += chunkSize) {
+    const chunk = nodesToExpand.slice(i, i + chunkSize);
+    chunk.forEach(node => {
+      node.expanded = true;
+    });
+    
+    // Progress güncelle
+    expandOneProgress.value = Math.min(i + chunkSize, nodesToExpand.length);
+    
+    // UI thread'ini serbest bırak
+    if (i + chunkSize < nodesToExpand.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+  
+  // Tamamlandı
+  expandOneProgress.value = expandOneTotal.value;
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  isExpandingOne.value = false;
+  expandOneProgress.value = 0;
+  expandOneTotal.value = 0;
 };
 
 // Collapse One Level - en derin açık seviyeyi kapat
@@ -760,6 +911,25 @@ const formatState = (state) => {
   }
 };
 
+// Boolean değer kontrolü
+const isBooleanValue = (value) => {
+  if (value === undefined || value === null) return false;
+  const strValue = String(value).toLowerCase().trim();
+  return strValue === 'true' || strValue === 'false';
+};
+
+// Boolean değer rengi
+const getBooleanColor = (value) => {
+  const strValue = String(value).toLowerCase().trim();
+  return strValue === 'true' ? 'success' : 'error';
+};
+
+// Boolean değer formatı
+const formatBooleanValue = (value) => {
+  const strValue = String(value).toLowerCase().trim();
+  return strValue === 'true' ? 'True' : 'False';
+};
+
 // Hücre değerini formatla
 const formatCellValue = (value, key) => {
   if (value === undefined || value === null) return '-';
@@ -821,44 +991,46 @@ watch(() => props.data, (newData) => {
 
 // ==================== EXPORT FUNCTIONS ====================
 
-// Flatten tree data for export (görünür olan tüm satırlar)
+// Flatten tree data for export (sadece ekranda görünen satırlar)
 const getFlatDataForExport = () => {
   const flatData = [];
   
-  const flatten = (nodes, level = 0) => {
-    for (const node of nodes) {
-      if (!node || !node.resourceid) continue;
-      
-      const row = {
-        level,
-        title: node['ds6w:label'] || node['ds6w:identifier'] || '-',
-      };
-      
-      // Dinamik sütunları ekle
-      for (const col of displayColumns.value) {
-        if (col.key === '_qty') {
-          row[col.label] = node.quantity || 1;
-        } else if (col.key === '_subqty') {
-          row[col.label] = node.subQuantity || 1;
-        } else if (col.key === '_totalqty') {
-          row[col.label] = node.totalQuantity || 1;
-        } else if (col.key.includes('baykar_revision')) {
-          row[col.label] = getBaykarRevisionValue(node, col.key);
-        } else {
-          row[col.label] = node[col.key] || '-';
-        }
-      }
-      
-      flatData.push(row);
-      
-      // Tüm çocukları dahil et (expanded olsun olmasın)
-      if (node.children?.length) {
-        flatten(node.children, level + 1);
+  // visibleNodes'u kullan - sadece ekranda görünen satırlar
+  for (const node of visibleNodes.value) {
+    if (!node || !node.resourceid) continue;
+    
+    const row = {
+      level: node.level || 0,
+      title: node['ds6w:label'] || node['ds6w:identifier'] || '-',
+    };
+    
+    // Dinamik sütunları ekle
+    for (const col of displayColumns.value) {
+      if (col.key === '_qty') {
+        row[col.label] = node.quantity || 1;
+      } else if (col.key === '_subqty') {
+        row[col.label] = node.subQuantity || 1;
+      } else if (col.key === '_totalqty') {
+        row[col.label] = node.totalQuantity || 1;
+      } else if (col.key.includes('baykar_revision')) {
+        row[col.label] = getBaykarRevisionValue(node, col.key);
+      } else if (col.key === 'ds6w:status') {
+        // Status için formatState kullan
+        row[col.label] = formatState(node[col.key]);
+      } else if (col.key === 'ds6w:type') {
+        // Type için displayType kullan
+        row[col.label] = node.displayType || node[col.key] || '-';
+      } else if (isBooleanValue(node[col.key])) {
+        // Boolean değerler için formatBooleanValue kullan
+        row[col.label] = formatBooleanValue(node[col.key]);
+      } else {
+        row[col.label] = node[col.key] || '-';
       }
     }
-  };
+    
+    flatData.push(row);
+  }
   
-  flatten(treeData.value);
   return flatData;
 };
 
@@ -888,8 +1060,17 @@ const exportToExcel = () => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'BOM');
   
-  // İndir
-  const fileName = `BOM_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  // Dosya adı: ROOT_PRODUCT-BAYKAR_REVISION-TARIH.xlsx
+  const rootNode = treeData.value?.[0];
+  const rootName = rootNode?.['ds6w:label'] || 'BOM';
+  const baykarRevKey = 'ds6wg:XP_VPMReference_Ext.baykar_revision';
+  const baykarRev = getBaykarRevisionValue(rootNode || {}, baykarRevKey);
+  const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '');
+  
+  // Dosya adından geçersiz karakterleri temizle
+  const sanitize = (str) => str.replace(/[<>:"/\\|?*]/g, '_');
+  const fileName = `${sanitize(rootName)}-${sanitize(baykarRev)}-${dateStr}.xlsx`;
+  
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName);
 };
@@ -1049,6 +1230,19 @@ const printTable = () => {
   height: 12px;
 }
 
+.search-spinner {
+  flex-shrink: 0;
+}
+
+.search-hint {
+  font-size: 10px;
+  color: #9e9e9e;
+  padding: 2px 4px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .toolbar-actions {
   display: flex;
   align-items: center;
@@ -1075,6 +1269,7 @@ const printTable = () => {
   cursor: pointer;
   transition: all 0.15s ease;
   color: #5f6368;
+  position: relative;
 }
 
 .toolbar-btn:hover {
@@ -1082,13 +1277,79 @@ const printTable = () => {
   color: #1976d2;
 }
 
-.toolbar-btn:active {
+/* Custom Tooltip */
+.toolbar-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: #333;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toolbar-btn[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 100;
+}
+
+.toolbar-btn[data-tooltip]:hover::after,
+.toolbar-btn[data-tooltip]:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.toolbar-btn:active:not(:disabled) {
   background: #dadce0;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .toolbar-btn svg {
   width: 20px;
   height: 20px;
+}
+
+.expand-progress-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.expand-percent {
+  position: absolute;
+  font-size: 7px;
+  font-weight: 700;
+  color: #1976d2;
+  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .tree-header {

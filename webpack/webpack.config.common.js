@@ -10,7 +10,8 @@ module.exports = {
     entry: ["babel-polyfill", "./src/lib/widget-starter.js"],
     output: {
         filename: "bundle.js",
-        path: path.resolve(__dirname, "../dist")
+        path: path.resolve(__dirname, "../dist"),
+        publicPath: "/bomwidget/"
     },
     resolve: {
         alias: { }
@@ -73,7 +74,8 @@ module.exports = {
             patterns: [
                 { from: "./src/index.html", to: "./index.html" },
                 { from: "./src/static", to: "static", globOptions: { ignore: ["**/*.md"] } },
-                { from: "./src/assets", to: "assets" }
+                { from: "./src/assets", to: "assets" },
+                { from: "./public/config.json", to: "./config.json" }
             ]
         }),
         new VueLoaderPlugin(),

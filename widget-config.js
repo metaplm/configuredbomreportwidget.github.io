@@ -25,6 +25,11 @@ const cfg = {
             devMiddleware: {
                 publicPath: "/bomwidget/"
             },
+            hot: false, // Disable HMR completely
+            liveReload: false, // Disable live reload
+            client: {
+                overlay: false
+            }
         }
     }
 };

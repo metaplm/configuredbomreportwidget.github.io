@@ -64,3 +64,7 @@ certificates/
 *.backup
 # SSL Certificates (sensitive)
 certificates/
+
+# Deploy artifacts
+dist-deploy/
+bomwidget-deploy.tar.gz

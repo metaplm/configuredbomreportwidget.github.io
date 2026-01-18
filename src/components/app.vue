@@ -15,7 +15,7 @@
           <span class="banner-title">BOM Report Widget</span>
           <div v-if="isDragOver && result" class="banner-drop-hint">
             <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
-            <span>Yeni Ürün</span>
+            <span>Yeni Ürün Ağacı</span>
           </div>
         </div>
 
@@ -101,6 +101,7 @@
                 :available-columns="availableColumns"
                 @update:selected-columns="onColumnsChanged"
                 @open-columns="showColumnSelector = true"
+                @close="closeBOM"
               />
 
               <!-- Placeholder Table (empty or loading) -->
@@ -108,13 +109,39 @@
                 <!-- Loading overlay -->
                 <div v-if="loading" class="loading-overlay">
                   <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-                  <p class="mt-3 text-grey">Ürün yapısı yükleniyor...</p>
                 </div>
 
                 <!-- Drop hint overlay (not loading) -->
                 <div v-else class="drop-hint-overlay">
-                  <img :src="getImagePath('VPMReference.png')" alt="Product" class="drop-icon" />
-                  <p class="drop-text">Ürün yapısını görmek için buraya sürükleyin</p>
+                  <div class="hint-split-container">
+                    <!-- Sol Panel: Son Açılanlar -->
+                    <div class="hint-panel recent-panel" :class="{ 'has-items': recentItems.length > 0 }">
+                      <p class="panel-label">Son Açılanlar</p>
+                      <div v-if="recentItems.length > 0" class="recent-list">
+                        <div 
+                          v-for="item in recentItems" 
+                          :key="item.id" 
+                          class="recent-item"
+                          @click="loadRecentItem(item)"
+                        >
+                          <img :src="getImagePath('VPMReference.png')" class="recent-icon" />
+                          <span class="recent-name">{{ item.name }}</span>
+                        </div>
+                      </div>
+                      <div v-else class="no-recent">
+                        <span class="no-recent-text">Henüz açılan ürün yok</span>
+                      </div>
+                    </div>
+
+                    <!-- Dikey Ayırıcı -->
+                    <div class="hint-divider"></div>
+
+                    <!-- Sağ Panel: Drop Zone -->
+                    <div class="hint-panel drop-panel">
+                      <img :src="getImagePath('VPMReference.png')" alt="Product" class="drop-icon" />
+                      <p class="drop-text">Açmak istediğiniz ürün ağacını buraya bırakın</p>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Placeholder table -->
@@ -175,7 +202,7 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
-import config, { getCustomAttributesUrl, getBomExpandUrl } from '../config.js';
+import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl } from '../config.js';
 
 const loading = ref(false);
 const loadingAttributes = ref(false);
@@ -290,7 +317,7 @@ const getPlaceholderTitleWidth = (i) => {
 const ootbColumns = [
   { key: 'ds6w:label', label: 'Title', required: true, category: 'ootb' },
   { key: '_qty', label: 'Qty', required: false, category: 'ootb' },
-  { key: '_subqty', label: 'SubQty', required: false, category: 'ootb' },
+  { key: '_subqty', label: 'Sub Qty', required: false, category: 'ootb' },
   { key: '_totalqty', label: 'Total Qty', required: false, category: 'ootb' },
   { key: 'ds6wg:revision', label: 'Revision', required: false, category: 'ootb' },
   { key: 'ds6w:responsible', label: 'Responsible', required: false, category: 'ootb' },
@@ -311,8 +338,53 @@ const availableColumns = computed(() => {
   return [...ootbColumns, ...customColumns.value];
 });
 
-// localStorage key
+// localStorage keys
 const STORAGE_KEY = 'bomwidget_column_settings';
+const RECENT_ITEMS_KEY = 'bomwidget_recent_items';
+
+// Recent items state
+const recentItems = ref(loadRecentItems());
+
+// Recent items fonksiyonları
+function loadRecentItems() {
+  try {
+    const saved = localStorage.getItem(RECENT_ITEMS_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn('Error loading recent items:', e);
+  }
+  return [];
+}
+
+function saveRecentItem(id, name) {
+  try {
+    let items = loadRecentItems();
+    // Aynı ID varsa kaldır
+    items = items.filter(item => item.id !== id);
+    // Başa ekle
+    items.unshift({ id, name, date: new Date().toISOString() });
+    // Max 10 tut
+    items = items.slice(0, 10);
+    localStorage.setItem(RECENT_ITEMS_KEY, JSON.stringify(items));
+    recentItems.value = items;
+  } catch (e) {
+    console.warn('Error saving recent item:', e);
+  }
+}
+
+async function loadRecentItem(item) {
+  rootPhysicalId.value = item.id;
+  await expandBOM();
+}
+
+// BOM'u kapat ve ilk ekrana dön
+function closeBOM() {
+  result.value = null;
+  error.value = null;
+  rootPhysicalId.value = '';
+}
 
 // Varsayılan sütunlar
 const defaultColumns = ['ds6w:label', '_qty', '_subqty', '_totalqty', 'ds6wg:revision', 'ds6w:status', 'ds6w:responsible'];
@@ -382,7 +454,10 @@ const loadCustomAttributes = async () => {
 };
 
 // Component mount olduğunda custom attributes'ları yükle
-onMounted(() => {
+onMounted(async () => {
+  // Runtime config'i yükle
+  await loadConfig();
+  // Custom attribute'ları yükle
   loadCustomAttributes();
 });
 
@@ -447,6 +522,13 @@ const expandBOM = async () => {
 
     result.value = response;
     console.log('BOM Expand Response:', response);
+    
+    // Recent items'a kaydet
+    if (response?.results?.length > 0) {
+      const rootNode = response.results.find(r => r.resourceid === rootPhysicalId.value);
+      const name = rootNode?.['ds6w:label'] || rootNode?.['ds6w:identifier'] || rootPhysicalId.value;
+      saveRecentItem(rootPhysicalId.value, name);
+    }
   } catch (err) {
     error.value = err.message || err;
     console.error('BOM Expand Error:', err);
@@ -504,6 +586,7 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding-top: 5px !important;
 }
 
 /* Banner Header */
@@ -523,7 +606,8 @@ body {
 }
 
 .widget-banner.drag-over {
-  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.7);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
 }
 
 .banner-drop-hint {
@@ -532,12 +616,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.25);
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 1);
   border-radius: 8px;
-  color: white;
+  color: #1976d2;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: pulse 1s infinite;
 }
 
@@ -752,24 +837,123 @@ body {
   right: 0;
   bottom: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 10;
+}
+
+.hint-split-container {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  max-width: 700px;
+  width: 90%;
+  min-height: 250px;
+}
+
+.hint-panel {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  z-index: 10;
+  padding: 24px;
+}
+
+.hint-divider {
+  width: 1px;
+  background: #e0e0e0;
+  margin: 20px 0;
+}
+
+.panel-label {
+  color: #1976d2;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Recent Panel */
+.recent-panel {
+  background: #fafafa;
+  border-radius: 12px 0 0 12px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+  color: #424242;
+}
+
+.recent-item:hover {
+  border-color: #1976d2;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.recent-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.recent-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-recent {
+  text-align: center;
+  padding: 20px;
+}
+
+.no-recent-text {
+  color: #9e9e9e;
+  font-size: 13px;
+}
+
+/* Drop Panel */
+.drop-panel {
+  background: #f5f9ff;
+  border-radius: 0 12px 12px 0;
+  border: 2px dashed #c5d9f0;
 }
 
 .drop-icon {
   width: 64px;
   height: 64px;
   object-fit: contain;
-  opacity: 0.6;
+  opacity: 0.7;
   margin-bottom: 12px;
 }
 
 .drop-text {
-  color: #9e9e9e;
+  color: #1976d2;
   font-size: 14px;
+  font-weight: 500;
 }
 
 /* Placeholder Table */

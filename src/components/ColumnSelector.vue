@@ -24,7 +24,7 @@
             
             <!-- OOTB Attributes -->
             <div class="section-header">
-              <span>Standart (OOTB)</span>
+              <span>Standard</span>
               <v-chip size="x-small">{{ ootbColumns.length }}</v-chip>
             </div>
             <div class="columns-grid">
@@ -49,7 +49,7 @@
 
             <!-- Custom Attributes -->
             <div class="section-header mt-3">
-              <span>Özel (Custom)</span>
+              <span>Custom</span>
               <v-chip size="x-small">{{ customColumns.length }}</v-chip>
             </div>
             <div v-if="customColumns.length > 0" class="columns-grid">
@@ -72,7 +72,7 @@
               </div>
             </div>
             <div v-else class="empty-custom">
-              <span class="text-caption text-grey">Özel alan yok</span>
+              <span class="text-caption text-grey">No custom attributes</span>
             </div>
 
             <!-- Quick Actions -->
@@ -85,8 +85,7 @@
 
           <!-- Sağ Panel: Sıralama -->
           <div class="order-panel">
-            <div class="panel-title">Sütun Sırası (Sürükle)</div>
-            <p class="text-caption text-grey mb-2">Title her zaman ilk sıradadır.</p>
+            <div class="panel-title">Sıralama</div>
             
             <div 
               class="order-list"
@@ -387,6 +386,9 @@ const applySelection = () => {
   background: #fafafa;
   border-radius: 6px;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .panel-title {
@@ -518,8 +520,9 @@ const applySelection = () => {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 280px;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .order-item {
