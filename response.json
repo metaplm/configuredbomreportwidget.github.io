@@ -1,0 +1,342 @@
+{
+    "infos": {
+        "encoding": "UTF-8",
+        "kind": "InstRefOccurrence",
+        "version": "1.1"
+    },
+    "results": [
+        {
+            "resourceid": "467E9E00D30F0000696C7FC400000003",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00002223",
+            "ds6w:label": "PRODUCT_STRUCTURE_TEST",
+            "ds6wg:revision": "A.1",
+            "ds6w:description": "ASD",
+            "ds6w:responsible": "Admin Platform",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "3DEXPERIENCE",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "admin_platform",
+            "ds6w:modified": "2026-01-18T06:38:14Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2026-01-18T06:38:14Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C7FDD0000000B",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00002224",
+            "ds6w:label": "SUB_PRODUCT_1",
+            "ds6wg:revision": "A.1",
+            "ds6w:description": "ASD",
+            "ds6w:responsible": "Admin Platform",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "3DEXPERIENCE",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "admin_platform",
+            "ds6w:modified": "2026-01-18T06:38:28Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2026-01-18T06:38:27Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929664600002E0F",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00000594",
+            "ds6w:label": "PART_1",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2026-01-18T06:39:22Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T09:07:18Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart"
+        },
+        {
+            "resourceid": "467E9E00CA0F000069296649000031C9",
+            "ds6w:globalType": "ds6w:Document",
+            "ds6w:type": "3DShape",
+            "ds6w:identifier": "3sh-35683277-00000434",
+            "ds6w:composed": "TRUE",
+            "ds6w:label": "Copy (7) of Top port",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2025-11-28T09:07:55Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T09:07:21Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929647E000017FF",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00000421",
+            "ds6w:label": "PART_2",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2026-01-18T06:39:42Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T08:59:42Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929648000001979",
+            "ds6w:globalType": "ds6w:Document",
+            "ds6w:type": "3DShape",
+            "ds6w:identifier": "3sh-35683277-00000346",
+            "ds6w:composed": "TRUE",
+            "ds6w:label": "Copy (8) of Handle-1",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2025-11-28T09:00:15Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T08:59:44Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C7FE900000017",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00002225",
+            "ds6w:label": "SUB_PRODUCT_2",
+            "ds6wg:revision": "A.1",
+            "ds6w:description": "ASD",
+            "ds6w:responsible": "Admin Platform",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "3DEXPERIENCE",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "admin_platform",
+            "ds6w:modified": "2026-01-18T06:38:41Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2026-01-18T06:38:41Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference"
+        },
+        {
+            "resourceid": "467E9E00CA0F0000692966480000303D",
+            "ds6w:globalType": "ds6w:Part",
+            "ds6w:type": "VPMReference",
+            "ds6w:identifier": "prd-35683277-00000687",
+            "ds6w:label": "PART_3",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2026-01-18T06:40:04Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T09:07:20Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_VPMNavProduct&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreReference%2FLPAbstractReference%2FPHYSICALAbstractReference%2FVPMReference&icon_95_2ddefaultthb_46_subtype=3DPart"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929664B000034B1",
+            "ds6w:globalType": "ds6w:Document",
+            "ds6w:type": "3DShape",
+            "ds6w:identifier": "3sh-35683277-00000527",
+            "ds6w:composed": "TRUE",
+            "ds6w:label": "Copy (5) of Copy (3) of Wheel",
+            "ds6wg:revision": "A",
+            "ds6w:responsible": "Mirac Cicek",
+            "ds6w:reserved": "FALSE",
+            "ds6w:cadMaster": "CATIAV5",
+            "ds6w:isLastRevision": "true",
+            "ds6w:status": "VPLM_SMB_Definition_MajorRev.IN_WORK",
+            "owner": "mirac.cicek",
+            "ds6w:modified": "2025-11-28T09:07:55Z",
+            "ds6w:project": "Common Space",
+            "ds6w:created": "2025-11-28T09:07:23Z",
+            "icon": "https://3dspace25x.metaplm.com/3dspace/cvservlet/files?fileType=ICON&ipml_46_iconname=I_Part&taxonomies=types%2FPLMEntity%2FPLMReference%2FPLMCoreRepReference%2FLPAbstractRepReference%2FLPAbstract3DRepReference%2FPHYSICALAbstract3DRepReference%2FVPMRepReference%2F3DShape"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C7FE300000013",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "SUB_PRODUCT_1.1",
+            "ro.plminstance.v_treeorder": "637922307.324",
+            "from": "467E9E00D30F0000696C7FC400000003",
+            "to": "467E9E00D30F0000696C7FDD0000000B"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C80140000002D",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "Copy (7) of Top port.1",
+            "matrixtxt": "1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,5200.0,5891.22679734036,770.0",
+            "ro.plminstance.v_treeorder": "637922356.765",
+            "from": "467E9E00D30F0000696C7FDD0000000B",
+            "to": "467E9E00CA0F00006929664600002E0F"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929664C00003643",
+            "ds6w:type": "VPMRepInstance",
+            "ro.plminstance.v_treeorder": "633499644.8",
+            "from": "467E9E00CA0F00006929664600002E0F",
+            "to": "467E9E00CA0F000069296649000031C9"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C801F00000037",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "PART_1.1",
+            "matrixtxt": "1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,5200.0,5891.22679734036,770.0",
+            "ro.plminstance.v_treeorder": "637922367.098",
+            "from": "467E9E00D30F0000696C7FDD0000000B",
+            "to": "467E9E00CA0F00006929664600002E0F"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C802B0000003F",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "Copy (8) of Handle-1.1",
+            "matrixtxt": "-1.0,-2.30924545559289E-16,1.53327783575849E-15,-1.38777878078145E-15,0.574360726772221,-0.818602318309499,-6.9161920374058E-16,-0.818602318309499,-0.574360726772221,6019.67408633981,5470.19017759897,-1203.19154076742",
+            "ro.plminstance.v_treeorder": "637922379.231",
+            "from": "467E9E00D30F0000696C7FDD0000000B",
+            "to": "467E9E00CA0F00006929647E000017FF"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929648100001ABB",
+            "ds6w:type": "VPMRepInstance",
+            "ro.plminstance.v_treeorder": "633499185.758",
+            "from": "467E9E00CA0F00006929647E000017FF",
+            "to": "467E9E00CA0F00006929648000001979"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C7FF100000021",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "SUB_PRODUCT_2.1",
+            "ro.plminstance.v_treeorder": "637922321.545",
+            "from": "467E9E00D30F0000696C7FC400000003",
+            "to": "467E9E00D30F0000696C7FE900000017"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C80400000004B",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "Copy (5) of Copy (3) of Wheel.1",
+            "matrixtxt": "1.0,0.0,0.0,0.0,-1.0,-6.98296267768627E-15,0.0,6.98296267768627E-15,-1.0,1670.0,5135.7267973403505,990.00000000007",
+            "ro.plminstance.v_treeorder": "637922400.223",
+            "from": "467E9E00D30F0000696C7FE900000017",
+            "to": "467E9E00CA0F0000692966480000303D"
+        },
+        {
+            "resourceid": "467E9E00CA0F00006929664E00003871",
+            "ds6w:type": "VPMRepInstance",
+            "ro.plminstance.v_treeorder": "633499646.786",
+            "from": "467E9E00CA0F0000692966480000303D",
+            "to": "467E9E00CA0F00006929664B000034B1"
+        },
+        {
+            "resourceid": "467E9E00D30F0000696C804A00000055",
+            "ds6w:globalType": "ds6w:Instance",
+            "ds6w:type": "VPMInstance",
+            "ds6w:label": "SUB_PRODUCT_1.2",
+            "ro.plminstance.v_treeorder": "637922410.582",
+            "from": "467E9E00D30F0000696C7FC400000003",
+            "to": "467E9E00D30F0000696C7FDD0000000B"
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C7FE300000013",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C80140000002D",
+                "467E9E00CA0F00006929664600002E0F",
+                "467E9E00CA0F00006929664C00003643",
+                "467E9E00CA0F000069296649000031C9"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C7FE300000013",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C801F00000037",
+                "467E9E00CA0F00006929664600002E0F",
+                "467E9E00CA0F00006929664C00003643",
+                "467E9E00CA0F000069296649000031C9"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C7FE300000013",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C802B0000003F",
+                "467E9E00CA0F00006929647E000017FF",
+                "467E9E00CA0F00006929648100001ABB",
+                "467E9E00CA0F00006929648000001979"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C7FF100000021",
+                "467E9E00D30F0000696C7FE900000017",
+                "467E9E00D30F0000696C80400000004B",
+                "467E9E00CA0F0000692966480000303D",
+                "467E9E00CA0F00006929664E00003871",
+                "467E9E00CA0F00006929664B000034B1"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C804A00000055",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C80140000002D",
+                "467E9E00CA0F00006929664600002E0F",
+                "467E9E00CA0F00006929664C00003643",
+                "467E9E00CA0F000069296649000031C9"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C804A00000055",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C801F00000037",
+                "467E9E00CA0F00006929664600002E0F",
+                "467E9E00CA0F00006929664C00003643",
+                "467E9E00CA0F000069296649000031C9"
+            ]
+        },
+        {
+            "Path": [
+                "467E9E00D30F0000696C7FC400000003",
+                "467E9E00D30F0000696C804A00000055",
+                "467E9E00D30F0000696C7FDD0000000B",
+                "467E9E00D30F0000696C802B0000003F",
+                "467E9E00CA0F00006929647E000017FF",
+                "467E9E00CA0F00006929648100001ABB",
+                "467E9E00CA0F00006929648000001979"
+            ]
+        }
+    ]
+}
