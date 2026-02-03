@@ -1,6 +1,5 @@
 {
   "tenant": "OnPremise",
-  "envId": "OnPremise",
   "attributeType": "VPMReference",
   "endpoints": {
     "bomExpand": "/cvservlet/progressiveexpand/v2",
