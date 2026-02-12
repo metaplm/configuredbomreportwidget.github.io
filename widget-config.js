@@ -1,10 +1,10 @@
 const cfg = {
     urls: {
         // URL to serve from webpack (local)
-        local: "https://dev.metaplm.com:8894/bomwidget/",
+        local: "https://dev.metaplm.com:8895/configuredbomwidget/",
 
         // URL to access this server (public) - production URL kullan
-        public: "https://dev.metaplm.com:8894/bomwidget/"
+        public: "https://dev.metaplm.com:8895/configuredbomwidget/"
     },
     backend: {
   
@@ -21,14 +21,14 @@ const cfg = {
                 }
             },
             host: "0.0.0.0",
-            port: 8894,
+            port: 8895,
             devMiddleware: {
-                publicPath: "/bomwidget/"
+                publicPath: "/configuredbomwidget/"
             },
-            hot: false, // Disable HMR completely
-            liveReload: false, // Disable live reload
+            hot: true,
+            liveReload: true,
             client: {
-                overlay: false
+                overlay: true
             }
         }
     }

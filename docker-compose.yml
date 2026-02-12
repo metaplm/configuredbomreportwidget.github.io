@@ -1,12 +1,12 @@
 services:
-  bomwidget:
+  configuredbomwidget:
     build:
       context: .
       dockerfile: Dockerfile
-    image: bomwidget:latest
-    container_name: bomwidget
+    image: configuredbomwidget:latest
+    container_name: configuredbomwidget
     ports:
-      - "8894:8894"
+      - "8895:8895"
     volumes:
       # SSL sertifikaları için volume mount (proje klasöründen)
       - ./certificates:/app/certificates:ro
@@ -22,9 +22,9 @@ services:
     environment:
       - NODE_ENV=development
     networks:
-      - widget-network
+      - configuredbomwidget-network
     restart: unless-stopped
 
 networks:
-  widget-network:
+  configuredbomwidget-network:
     driver: bridge

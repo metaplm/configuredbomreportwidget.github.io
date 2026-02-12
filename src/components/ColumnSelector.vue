@@ -5,7 +5,7 @@
         <svg class="title-icon mr-2" viewBox="0 0 24 24">
           <path d="M3,4H7V8H3V4M9,5V7H21V5H9M3,10H7V14H3V10M9,11V13H21V11H9M3,16H7V20H3V16M9,17V19H21V17H9" fill="currentColor"/>
         </svg>
-        <span>Sütun Seçimi ve Sıralama</span>
+        <span>Column Selection and Ordering</span>
         <v-spacer />
         <v-btn icon size="small" variant="text" @click="closeDialog">
           <svg class="close-icon" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@
         <div class="two-column-layout">
           <!-- Sol Panel: Sütun Seçimi -->
           <div class="selection-panel">
-            <div class="panel-title">Kullanılabilir Sütunlar</div>
+            <div class="panel-title">Available Columns</div>
             
             <!-- OOTB Attributes -->
             <div class="section-header">
@@ -47,16 +47,16 @@
               </div>
             </div>
 
-            <!-- Custom Attributes -->
+            <!-- EBOM Custom Attributes -->
             <div class="section-header mt-3">
-              <span>Custom</span>
-              <v-chip size="x-small">{{ customColumns.length }}</v-chip>
+              <span>EBOM Custom</span>
+              <v-chip size="x-small" color="blue">{{ ebomCustomColumns.length }}</v-chip>
             </div>
-            <div v-if="customColumns.length > 0" class="columns-grid">
+            <div v-if="ebomCustomColumns.length > 0" class="columns-grid">
               <div 
-                v-for="col in customColumns" 
+                v-for="col in ebomCustomColumns" 
                 :key="col.key"
-                class="column-item custom"
+                class="column-item custom ebom"
                 :class="{ 'selected': isSelected(col.key) }"
                 :draggable="!isSelected(col.key)"
                 @click="toggleColumn(col.key, !isSelected(col.key))"
@@ -72,20 +72,48 @@
               </div>
             </div>
             <div v-else class="empty-custom">
-              <span class="text-caption text-grey">No custom attributes</span>
+              <span class="text-caption text-grey">No EBOM custom attributes</span>
+            </div>
+
+            <!-- MBOM Custom Attributes -->
+            <div class="section-header mt-3">
+              <span>MBOM Custom</span>
+              <v-chip size="x-small" color="purple">{{ mbomCustomColumns.length }}</v-chip>
+            </div>
+            <div v-if="mbomCustomColumns.length > 0" class="columns-grid">
+              <div 
+                v-for="col in mbomCustomColumns" 
+                :key="col.key"
+                class="column-item custom mbom"
+                :class="{ 'selected': isSelected(col.key) }"
+                :draggable="!isSelected(col.key)"
+                @click="toggleColumn(col.key, !isSelected(col.key))"
+                @dragstart="onSourceDragStart(col.key, $event)"
+                @dragend="onSourceDragEnd"
+              >
+                <span class="check-icon">
+                  <svg v-if="isSelected(col.key)" viewBox="0 0 24 24">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" fill="currentColor"/>
+                  </svg>
+                </span>
+                <span class="column-label" :title="col.label">{{ truncateLabel(col.label) }}</span>
+              </div>
+            </div>
+            <div v-else class="empty-custom">
+              <span class="text-caption text-grey">No MBOM custom attributes</span>
             </div>
 
             <!-- Quick Actions -->
             <div class="quick-actions mt-3">
               <v-btn size="x-small" variant="text" @click="selectAllOotb">OOTB</v-btn>
-              <v-btn size="x-small" variant="text" @click="selectAll">Tümü</v-btn>
+              <v-btn size="x-small" variant="text" @click="selectAll">All</v-btn>
               <v-btn size="x-small" variant="text" @click="selectMinimum">Min</v-btn>
             </div>
           </div>
 
           <!-- Sağ Panel: Sıralama -->
           <div class="order-panel">
-            <div class="panel-title">Sıralama</div>
+            <div class="panel-title">Ordering</div>
             
             <div 
               class="order-list"
@@ -100,7 +128,7 @@
                   <svg viewBox="0 0 24 24"><path d="M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z" fill="currentColor"/></svg>
                 </span>
                 <span class="order-label">Title</span>
-                <span class="fixed-badge">Sabit</span>
+                <span class="fixed-badge">Fixed</span>
               </div>
 
               <!-- Sıralanabilir Sütunlar -->
@@ -126,7 +154,7 @@
 
               <!-- Drop zone placeholder -->
               <div v-if="orderedColumns.length === 0 || isDraggingFromSource" class="drop-placeholder" :class="{ 'active': isOverDropZone }">
-                <span>{{ orderedColumns.length === 0 ? 'Sütun seçin veya buraya sürükleyin' : 'Buraya bırakın' }}</span>
+                <span>{{ orderedColumns.length === 0 ? 'Select columns or drag here' : 'Drop here' }}</span>
               </div>
             </div>
           </div>
@@ -137,12 +165,12 @@
 
       <v-card-actions class="px-4 py-3">
         <span class="text-caption text-grey">
-          {{ localSelectedColumns.length }} sütun seçili
+          {{ localSelectedColumns.length }} columns selected
         </span>
         <v-spacer />
-        <v-btn variant="text" @click="closeDialog">İptal</v-btn>
+        <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
         <v-btn color="primary" variant="flat" @click="applySelection">
-          Uygula
+          Apply
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -192,8 +220,19 @@ const ootbColumns = computed(() => {
   return props.availableColumns.filter(col => col.category === 'ootb');
 });
 
+// EBOM Custom Attributes (VPMReference)
+const ebomCustomColumns = computed(() => {
+  return props.availableColumns.filter(col => col.category === 'ebom_custom');
+});
+
+// MBOM Custom Attributes (DELFmiFunctionPPRReference)
+const mbomCustomColumns = computed(() => {
+  return props.availableColumns.filter(col => col.category === 'mbom_custom');
+});
+
+// Backward compatibility - tüm custom columns
 const customColumns = computed(() => {
-  return props.availableColumns.filter(col => col.category === 'custom');
+  return props.availableColumns.filter(col => col.category === 'ebom_custom' || col.category === 'mbom_custom' || col.category === 'custom');
 });
 
 // Sıralanmış sütunlar (ds6w:label hariç)
@@ -458,6 +497,38 @@ const applySelection = () => {
 .column-item.custom.selected {
   border-color: #9c27b0;
   background-color: #e1bee7;
+}
+
+/* EBOM Custom - Blue theme */
+.column-item.custom.ebom {
+  border-color: #90caf9;
+}
+
+.column-item.custom.ebom.selected {
+  border-color: #1976d2;
+  background-color: #bbdefb;
+}
+
+.column-item.custom.ebom.selected .check-icon {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: white;
+}
+
+/* MBOM Custom - Purple theme */
+.column-item.custom.mbom {
+  border-color: #ce93d8;
+}
+
+.column-item.custom.mbom.selected {
+  border-color: #9c27b0;
+  background-color: #e1bee7;
+}
+
+.column-item.custom.mbom.selected .check-icon {
+  background: #9c27b0;
+  border-color: #9c27b0;
+  color: white;
 }
 
 .check-icon {

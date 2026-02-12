@@ -11,11 +11,11 @@
           @dragleave="result && onDragLeave()"
           @drop.prevent="result && onDrop($event)"
         >
-          <img :src="getImagePath('baykar_logo.png')" alt="Baykar" class="banner-logo" />
-          <span class="banner-title">BOM Report Widget</span>
+          <img :src="getImagePath('zenvo_logo.png') + '?v=2'" alt="Zenvo" class="banner-logo" />
+          <span class="banner-title">MBOM/EBOM Report</span>
           <div v-if="isDragOver && result" class="banner-drop-hint">
             <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
-            <span>Yeni Ürün Ağacı</span>
+            <span>New Product Structure</span>
           </div>
         </div>
 
@@ -23,7 +23,8 @@
             <v-alert 
               v-if="error" 
               type="error" 
-              class="mx-4 mt-4 mb-2"
+              class="mx-4 mt-2 mb-2 error-alert"
+              density="compact"
               closable
               @click:close="error = null"
             >
@@ -53,11 +54,11 @@
                   <svg class="dialog-icon mr-2" viewBox="0 0 24 24">
                     <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z" fill="currentColor"/>
                   </svg>
-                  <span>Ürün Seçin</span>
+                  <span>Select Product</span>
                 </v-card-title>
                 <v-divider />
                 <v-card-text class="py-2">
-                  <p class="text-body-2 text-grey mb-3">{{ droppedItems.length }} ürün bırakıldı. Hangisinin yapısını görmek istiyorsunuz?</p>
+                  <p class="text-body-2 text-grey mb-3">{{ droppedItems.length }} products dropped. Which one's structure would you like to view?</p>
                   <div class="item-list">
                     <div 
                       v-for="item in droppedItems" 
@@ -65,7 +66,7 @@
                       class="item-option"
                       @click="selectItem(item)"
                     >
-                      <img :src="getImagePath('VPMReference.png')" class="item-icon" />
+                      <img :src="getImagePath(item.objectType === 'CreateAssembly' ? 'Route.png' : 'VPMReference.png')" class="item-icon" />
                       <div class="item-info">
                         <div class="item-name">{{ item.displayName || item.objectId }}</div>
                         <div class="item-type">{{ item.displayType || item.objectType }}</div>
@@ -79,7 +80,7 @@
                 <v-divider />
                 <v-card-actions>
                   <v-spacer />
-                  <v-btn variant="text" @click="showItemSelector = false; droppedItems = []">İptal</v-btn>
+                  <v-btn variant="text" @click="showItemSelector = false; droppedItems = []">Cancel</v-btn>
                 </v-card-actions>
               </v-card>
             </v-dialog>
@@ -99,9 +100,14 @@
                 :data="result" 
                 :selected-columns="selectedColumns"
                 :available-columns="availableColumns"
+                :column-widths="columnWidths"
+                :root-physical-id="rootPhysicalId"
+                :item-type="itemType"
                 @update:selected-columns="onColumnsChanged"
+                @update:column-widths="onColumnWidthsChanged"
                 @open-columns="showColumnSelector = true"
                 @close="closeBOM"
+                @apply-configuration="onApplyConfiguration"
               />
 
               <!-- Placeholder Table (empty or loading) -->
@@ -116,7 +122,10 @@
                   <div class="hint-split-container">
                     <!-- Sol Panel: Son Açılanlar -->
                     <div class="hint-panel recent-panel" :class="{ 'has-items': recentItems.length > 0 }">
-                      <p class="panel-label">Son Açılanlar</p>
+                      <div class="panel-header">
+                        <p class="panel-label">Recent</p>
+                        <a v-if="recentItems.length > 0" href="#" class="clear-recent-link" @click.prevent="clearRecentItems">Clear</a>
+                      </div>
                       <div v-if="recentItems.length > 0" class="recent-list">
                         <div 
                           v-for="item in recentItems" 
@@ -124,12 +133,12 @@
                           class="recent-item"
                           @click="loadRecentItem(item)"
                         >
-                          <img :src="getImagePath('VPMReference.png')" class="recent-icon" />
+                          <img :src="getImagePath(item.type === 'CreateAssembly' ? 'CreateAssembly.png' : 'VPMReference.png')" class="recent-icon" />
                           <span class="recent-name">{{ item.name }}</span>
                         </div>
                       </div>
                       <div v-else class="no-recent">
-                        <span class="no-recent-text">Henüz açılan ürün yok</span>
+                        <span class="no-recent-text">No products opened yet</span>
                       </div>
                     </div>
 
@@ -138,8 +147,11 @@
 
                     <!-- Sağ Panel: Drop Zone -->
                     <div class="hint-panel drop-panel">
-                      <img :src="getImagePath('VPMReference.png')" alt="Product" class="drop-icon" />
-                      <p class="drop-text">Açmak istediğiniz ürün ağacını buraya bırakın</p>
+                      <div class="drop-icons">
+                        <img :src="getImagePath('VPMReference.png')" alt="Product" class="drop-icon" />
+                        <img :src="getImagePath('CreateAssembly.png')" alt="Manufacturing" class="drop-icon" />
+                      </div>
+                      <p class="drop-text">Drop VPMReference or CreateAssembly here</p>
                     </div>
                   </div>
                 </div>
@@ -188,7 +200,7 @@
               <!-- Drag over indicator (only when no data) -->
               <div v-if="isDragOver && !result" class="drag-indicator">
                 <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
-                <span>Buraya bırakın</span>
+                <span>Drop here</span>
               </div>
             </div>
         </div>
@@ -202,7 +214,7 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
-import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl } from '../config.js';
+import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, applyAttributeMapping, getConfig, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
 
 const loading = ref(false);
 const loadingAttributes = ref(false);
@@ -221,10 +233,14 @@ const droppedItems = ref([]);
 // Root ID - dinamik, drag & drop ile değişebilir
 const rootPhysicalId = ref('467E9E00D30F0000696C7FC400000003');
 
+// Item Type - VPMReference veya CreateAssembly (dsmfg:MfgItem)
+// Bu değer drop edilen nesnenin tipine göre belirlenir
+const itemType = ref('VPMReference'); // 'VPMReference' | 'CreateAssembly'
+
 // Image path helper
 const getImagePath = (filename) => {
   // eslint-disable-next-line no-undef
-  const basePath = typeof __webpack_public_path__ !== 'undefined' ? __webpack_public_path__ : '/bomwidget/';
+  const basePath = typeof __webpack_public_path__ !== 'undefined' ? __webpack_public_path__ : '/configuredbomwidget/';
   return `${basePath}static/images/${filename}`;
 };
 
@@ -277,18 +293,27 @@ const onDrop = (event) => {
     if (data.protocol === '3DXContent' && data.data?.items?.length > 0) {
       const items = data.data.items;
       
-      if (items.length > 1) {
+      // Desteklenen tipler: VPMReference ve CreateAssembly
+      const supportedTypes = ['VPMReference', 'CreateAssembly'];
+      const filteredItems = items.filter(item => supportedTypes.includes(item.objectType));
+      
+      if (filteredItems.length === 0) {
+        showWarning('Unsupported object type. Please drop a VPMReference or CreateAssembly.');
+        return;
+      }
+      
+      if (filteredItems.length > 1) {
         // Birden fazla item varsa seçim dialog'u göster
-        droppedItems.value = items;
+        droppedItems.value = filteredItems;
         showItemSelector.value = true;
       } else {
         // Tek item varsa direkt yükle
-        selectItem(items[0]);
+        selectItem(filteredItems[0]);
       }
     }
   } catch (err) {
     console.error('Drop parse error:', err);
-    error.value = 'Geçersiz veri formatı';
+    error.value = 'Invalid data format';
   }
 };
 
@@ -298,7 +323,15 @@ const selectItem = (item) => {
     rootPhysicalId.value = item.objectId;
     showItemSelector.value = false;
     droppedItems.value = [];
-    expandBOM();
+    
+    // objectType'a göre itemType belirle ve uygun expand fonksiyonunu çağır
+    if (item.objectType === 'CreateAssembly') {
+      itemType.value = 'CreateAssembly';
+      expandMfgBOM();
+    } else {
+      itemType.value = 'VPMReference';
+      expandBOM();
+    }
   }
 };
 
@@ -319,6 +352,7 @@ const ootbColumns = [
   { key: '_qty', label: 'Qty', required: false, category: 'ootb' },
   { key: '_subqty', label: 'Sub Qty', required: false, category: 'ootb' },
   { key: '_totalqty', label: 'Total Qty', required: false, category: 'ootb' },
+  { key: '_parentProduct', label: 'Parent Product', required: false, category: 'ootb' },
   { key: 'ds6wg:revision', label: 'Revision', required: false, category: 'ootb' },
   { key: 'ds6w:responsible', label: 'Responsible', required: false, category: 'ootb' },
   { key: 'ds6w:status', label: 'Status', required: false, category: 'ootb' },
@@ -339,8 +373,9 @@ const availableColumns = computed(() => {
 });
 
 // localStorage keys
-const STORAGE_KEY = 'bomwidget_column_settings';
-const RECENT_ITEMS_KEY = 'bomwidget_recent_items';
+const STORAGE_KEY = 'configuredbomwidget_column_settings';
+const COLUMN_WIDTHS_KEY = 'configuredbomwidget_column_widths';
+const RECENT_ITEMS_KEY = 'configuredbomwidget_recent_items';
 
 // Recent items state
 const recentItems = ref(loadRecentItems());
@@ -358,13 +393,13 @@ function loadRecentItems() {
   return [];
 }
 
-function saveRecentItem(id, name) {
+function saveRecentItem(id, name, type = 'VPMReference') {
   try {
     let items = loadRecentItems();
     // Aynı ID varsa kaldır
     items = items.filter(item => item.id !== id);
-    // Başa ekle
-    items.unshift({ id, name, date: new Date().toISOString() });
+    // Başa ekle - itemType bilgisini de kaydet
+    items.unshift({ id, name, type, date: new Date().toISOString() });
     // Max 10 tut
     items = items.slice(0, 10);
     localStorage.setItem(RECENT_ITEMS_KEY, JSON.stringify(items));
@@ -374,9 +409,25 @@ function saveRecentItem(id, name) {
   }
 }
 
+function clearRecentItems() {
+  try {
+    localStorage.removeItem(RECENT_ITEMS_KEY);
+    recentItems.value = [];
+  } catch (e) {
+    console.warn('Error clearing recent items:', e);
+  }
+}
+
 async function loadRecentItem(item) {
   rootPhysicalId.value = item.id;
-  await expandBOM();
+  // itemType'a göre doğru expand fonksiyonunu çağır
+  if (item.type === 'CreateAssembly') {
+    itemType.value = 'CreateAssembly';
+    await expandMfgBOM();
+  } else {
+    itemType.value = 'VPMReference';
+    await expandBOM();
+  }
 }
 
 // BOM'u kapat ve ilk ekrana dön
@@ -384,6 +435,7 @@ function closeBOM() {
   result.value = null;
   error.value = null;
   rootPhysicalId.value = '';
+  itemType.value = 'VPMReference'; // Varsayılana dön
 }
 
 // Varsayılan sütunlar
@@ -415,39 +467,112 @@ const saveColumns = (columns) => {
   }
 };
 
+// Kolon genişliklerini localStorage'dan yükle
+const loadSavedColumnWidths = () => {
+  try {
+    const saved = localStorage.getItem(COLUMN_WIDTHS_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn('Error loading saved column widths:', e);
+  }
+  return {};
+};
+
+// Kolon genişliklerini localStorage'a kaydet
+const saveColumnWidths = (widths) => {
+  try {
+    localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(widths));
+  } catch (e) {
+    console.warn('Error saving column widths:', e);
+  }
+};
+
 // Seçilen sütunlar
 const selectedColumns = ref(loadSavedColumns());
 
-// Custom attributes'ları API'den yükle
+// Kolon genişlikleri
+const columnWidths = ref(loadSavedColumnWidths());
+
+// Kolon genişlikleri değiştiğinde
+const onColumnWidthsChanged = (widths) => {
+  columnWidths.value = widths;
+  saveColumnWidths(widths);
+};
+
+// Custom attributes'ları API'den yükle (EBOM ve MBOM)
 const loadCustomAttributes = async () => {
   loadingAttributes.value = true;
   try {
-    const response = await Platform3DSpace.call3DSpace({
-      url: getCustomAttributesUrl(),
+    // EBOM için VPMReference attributes
+    const ebomPromise = Platform3DSpace.call3DSpace({
+      url: getCustomAttributesUrl('VPMReference'),
       method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
+      headers: { 'Accept': 'application/json' },
       type: 'json'
     });
-
-    if (response?.attributeDescription) {
-      customColumns.value = response.attributeDescription
-        .filter(attr => attr.isDeployed) // Sadece deploy edilmiş olanları al
-        .map(attr => ({
-          key: `ds6wg:${attr.m1Name}`, // API'de kullanılacak key format
-          label: attr.nlsName || attr.internalName,
-          required: false,
-          category: 'custom',
-          type: attr.type,
-          internalName: attr.internalName,
-          m1Name: attr.m1Name
-        }));
-      console.log('Custom Attributes loaded:', customColumns.value);
+    
+    // MBOM için DELFmiFunctionPPRReference attributes
+    const mbomPromise = Platform3DSpace.call3DSpace({
+      url: getCustomAttributesUrl('DELFmiFunctionPPRReference'),
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      type: 'json'
+    });
+    
+    const [ebomResponse, mbomResponse] = await Promise.all([ebomPromise, mbomPromise]);
+    
+    const allCustomColumns = [];
+    
+    // EBOM custom attributes
+    if (ebomResponse?.attributeDescription) {
+      const ebomAttrs = ebomResponse.attributeDescription
+        .filter(attr => attr.isDeployed)
+        .map(attr => {
+          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
+            ? attr.sixWTag
+            : `ds6wg:${attr.m1Name}`;
+          return {
+            key,
+            label: attr.nlsName || attr.internalName,
+            required: false,
+            category: 'ebom_custom',
+            type: attr.type,
+            internalName: attr.internalName,
+            m1Name: attr.m1Name
+          };
+        });
+      allCustomColumns.push(...ebomAttrs);
+      console.log('EBOM Custom Attributes loaded:', ebomAttrs.length);
     }
+    
+    // MBOM custom attributes
+    if (mbomResponse?.attributeDescription) {
+      const mbomAttrs = mbomResponse.attributeDescription
+        .filter(attr => attr.isDeployed)
+        .map(attr => {
+          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
+            ? attr.sixWTag
+            : `dsmfg:${attr.m1Name}`;
+          return {
+            key,
+            label: attr.nlsName || attr.internalName,
+            required: false,
+            category: 'mbom_custom',
+            type: attr.type,
+            internalName: attr.internalName,
+            m1Name: attr.m1Name
+          };
+        });
+      allCustomColumns.push(...mbomAttrs);
+      console.log('MBOM Custom Attributes loaded:', mbomAttrs.length);
+    }
+    
+    customColumns.value = allCustomColumns;
+    console.log('Total Custom Attributes loaded:', customColumns.value.length);
   } catch (err) {
     console.error('Error loading custom attributes:', err);
-    // Hata durumunda boş bırak, uygulamanın çalışmasını engelleme
   } finally {
     loadingAttributes.value = false;
   }
@@ -455,8 +580,8 @@ const loadCustomAttributes = async () => {
 
 // Component mount olduğunda custom attributes'ları yükle
 onMounted(async () => {
-  // Runtime config'i yükle
-  await loadConfig();
+  // Runtime config'i yükle (force reload ile cache'i bypass et)
+  await loadConfig(true);
   // Custom attribute'ları yükle
   loadCustomAttributes();
 });
@@ -464,9 +589,28 @@ onMounted(async () => {
 // select_object için kullanılacak alanlar
 const selectObjectFields = computed(() => {
   // ds6wg:revision her zaman dahil (baykar_revision fallback için gerekli)
-  const baseFields = ['physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision'];
+  // ds6wg:EnterpriseExtension.V_PartNumber her zaman dahil (Parent Product için gerekli)
+  const baseFields = ['physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision', 'ds6wg:EnterpriseExtension.V_PartNumber'];
+  
   // _qty gibi internal key'leri filtrele (API'ye gönderilmemeli)
-  const apiColumns = selectedColumns.value.filter(col => !col.startsWith('_'));
+  let apiColumns = selectedColumns.value.filter(col => !col.startsWith('_'));
+  
+  // itemType'a göre karşı tarafın custom attribute'larını filtrele
+  // EBOM expand ederken MBOM attribute'ları gönderilmemeli ve tersi
+  if (itemType.value === 'CreateAssembly') {
+    // MBOM için: EBOM custom attribute'larını çıkar
+    const ebomCustomKeys = customColumns.value
+      .filter(c => c.category === 'ebom_custom')
+      .map(c => c.key);
+    apiColumns = apiColumns.filter(col => !ebomCustomKeys.includes(col));
+  } else {
+    // EBOM için: MBOM custom attribute'larını çıkar
+    const mbomCustomKeys = customColumns.value
+      .filter(c => c.category === 'mbom_custom')
+      .map(c => c.key);
+    apiColumns = apiColumns.filter(col => !mbomCustomKeys.includes(col));
+  }
+  
   return [...new Set([...baseFields, ...apiColumns])];
 });
 
@@ -476,6 +620,9 @@ const expandBOM = async () => {
   result.value = null;
 
   try {
+    // Config'in yüklendiğinden emin ol
+    await loadConfig();
+    
     const requestBody = {
       batch: {
         expands: [{
@@ -493,17 +640,24 @@ const expandBOM = async () => {
                 }
               }]
             }
+          },
+          // Cloud ortamında progressive expand için gerekli (graph yoksa yanıt dönmeyebilir)
+          graph: {
+            descending_condition: { uql: 'availability:2' },
+            descending_condition_object: { uql: '[ds6w:globaltype]:"ds6w:Document" OR [ds6w:globaltype]:"ds6w:Part"' },
+            descending_condition_relation: { uql: 'NOT (flattenedtaxonomies:"reltypes/XCADBaseDependency") AND NOT (flattenedtaxonomies:"reltypes/Reference Document")' }
           }
         }]
       },
       outputs: {
-        select_object: selectObjectFields.value,
+        select_object: applyAttributeMapping(selectObjectFields.value),
         select_relation: [
           'physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:identifier', 'ds6w:label',
           'matrixtxt', 'ro.pgpshowextension.V_PGP_Show', 'ro.plminstance.v_treeorder'
         ],
         hits: {
-          predefined_computation: ['urlstream|thumbnail|2dthb|allrefs', 'icons']
+          predefined_computation: ['urlstream|thumbnail|2dthb|allrefs', 'icons'],
+          with_units: 1
         },
         select_pgp: ['show', 'hide'],
         format: 'entity_relation_occurrence'
@@ -520,18 +674,366 @@ const expandBOM = async () => {
       type: 'json'
     });
 
-    result.value = response;
     console.log('BOM Expand Response:', response);
     
-    // Recent items'a kaydet
-    if (response?.results?.length > 0) {
-      const rootNode = response.results.find(r => r.resourceid === rootPhysicalId.value);
-      const name = rootNode?.['ds6w:label'] || rootNode?.['ds6w:identifier'] || rootPhysicalId.value;
-      saveRecentItem(rootPhysicalId.value, name);
+    // API hata kontrolü - custom attribute vb. bulunamazsa errors dönebilir ama results da olabilir
+    if (response?.errors?.length > 0) {
+      const errorMessages = response.errors.map(e => e.reason || e.message || e.code || JSON.stringify(e)).join(', ');
+      // Sonuç varsa uyarı ver, devam et; yoksa hata ver ve dur
+      if (response?.results?.length > 0) {
+        showWarning(`Some attributes could not be loaded: ${errorMessages}`);
+        console.warn('BOM Expand API warnings (continuing with available data):', response.errors);
+      } else {
+        error.value = `Error loading product structure: ${errorMessages}`;
+        console.error('BOM Expand API Error:', response.errors);
+        return;
+      }
     }
+    
+    // Sonuç kontrolü
+    if (!response?.results?.length) {
+      error.value = 'Product structure not found or empty.';
+      return;
+    }
+    
+    // Ters mapping uygula - API'den gelen mapped key'leri orijinal key'lere dönüştür
+    const cfg = getConfig();
+    const mapping = cfg.attributeMapping || {};
+    // Ters mapping oluştur: { "Baykar:Material": "ds6wg:XP_VPMReference_Ext.Material" }
+    const reverseMapping = Object.entries(mapping).reduce((acc, [original, mapped]) => {
+      acc[mapped] = original;
+      return acc;
+    }, {});
+    
+    // Her result objesindeki key'leri dönüştür
+    if (Object.keys(reverseMapping).length > 0) {
+      response.results = response.results.map(item => {
+        const newItem = { ...item };
+        for (const [mappedKey, originalKey] of Object.entries(reverseMapping)) {
+          if (mappedKey in newItem) {
+            newItem[originalKey] = newItem[mappedKey];
+            // Mapped key'i de tut (isteğe bağlı silinebilir)
+            // delete newItem[mappedKey];
+          }
+        }
+        return newItem;
+      });
+    }
+    
+    result.value = response;
+    
+    // Recent items'a kaydet (VPMReference)
+    const rootNode = response.results.find(r => r.resourceid === rootPhysicalId.value);
+    const name = rootNode?.['ds6w:label'] || rootNode?.['ds6w:identifier'] || rootPhysicalId.value;
+    saveRecentItem(rootPhysicalId.value, name, 'VPMReference');
   } catch (err) {
-    error.value = err.message || err;
+    error.value = `Error loading product structure: ${err.message || String(err)}`;
     console.error('BOM Expand Error:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// ==================== MfgItem (CreateAssembly) Expand ====================
+const expandMfgBOM = async () => {
+  loading.value = true;
+  error.value = null;
+  result.value = null;
+
+  try {
+    // Config'in yüklendiğinden emin ol
+    await loadConfig();
+    
+    const requestBody = {
+      expandDepth: -1,
+      withPath: true,
+      type_filter_bo: [],
+      type_filter_rel: [],
+      filter: {}
+    };
+
+    const response = await Platform3DSpace.call3DSpace({
+      url: getMfgItemExpandUrl(rootPhysicalId.value),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: requestBody,
+      type: 'json'
+    });
+
+    console.log('MfgItem BOM Expand Response:', response);
+    
+    // API hata kontrolü
+    if (response?.errors?.length > 0) {
+      const errorMessages = response.errors.map(e => e.reason || e.message || e.code || JSON.stringify(e)).join(', ');
+      if (response?.member?.length > 0) {
+        showWarning(`Some attributes could not be loaded: ${errorMessages}`);
+        console.warn('MfgItem BOM Expand API warnings (continuing with available data):', response.errors);
+      } else {
+        error.value = `Error loading manufacturing structure: ${errorMessages}`;
+        console.error('MfgItem BOM Expand API Error:', response.errors);
+        return;
+      }
+    }
+    
+    // Sonuç kontrolü - MfgItem API member array döndürüyor
+    const members = response?.member || [];
+    if (!members.length) {
+      error.value = 'Manufacturing structure not found or empty.';
+      return;
+    }
+    
+    // MfgItem response'unu VPMReference formatına dönüştür
+    // Böylece BomTreeTable aynı buildTree fonksiyonunu kullanabilir
+    const transformedResults = transformMfgItemResponse(members);
+    
+    result.value = {
+      results: transformedResults,
+      itemType: 'CreateAssembly'
+    };
+    
+    // Recent items'a kaydet (CreateAssembly/MBOM)
+    const rootNode = transformedResults.find(r => r.resourceid === rootPhysicalId.value);
+    const name = rootNode?.['ds6w:label'] || rootNode?.['ds6w:identifier'] || rootPhysicalId.value;
+    saveRecentItem(rootPhysicalId.value, name, 'CreateAssembly');
+    
+  } catch (err) {
+    error.value = `Error loading manufacturing structure: ${err.message || String(err)}`;
+    console.error('MfgItem BOM Expand Error:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// MfgItem response'unu VPMReference formatına dönüştür
+const transformMfgItemResponse = (members) => {
+  const results = [];
+  const pathObjects = [];
+  
+  // MfgItem'daki ana tipler (reference node'lar)
+  const mfgMainTypes = ['CreateAssembly', 'ElementaryEndItem', 'Provide', 'CreateKit', 'CreateMaterial', 'ProcessContinuousProvide'];
+  // MfgItem'daki instance tipler
+  const mfgInstanceTypes = ['DELFmiFunctionIdentifiedInstance', 'ProcessInstanceContinuous'];
+  
+  for (const item of members) {
+    // Path objesi kontrolü - MfgItem'da "path" (küçük harf) kullanılıyor
+    if (item.path) {
+      // Path objesini büyük harfli "Path" formatına dönüştür (buildTree uyumluluğu için)
+      pathObjects.push({ Path: item.path });
+    } else if (item.id && item.type) {
+      // Instance mi yoksa ana node mu kontrol et
+      if (mfgInstanceTypes.includes(item.type)) {
+        // Instance node - from/to formatına dönüştür
+        // MfgItem'da: parent = from, reference = to
+        const transformed = {
+          resourceid: item.id,
+          'ds6w:type': item.type,
+          from: item.parent,
+          to: item.reference,
+          'ds6w:label': item.name || '',
+          'ds6w:identifier': item.name || '',
+          _original: item
+        };
+        results.push(transformed);
+      } else {
+        // Ana node (CreateAssembly, ElementaryEndItem, Provide, vb.)
+        const transformed = {
+          resourceid: item.id,
+          'ds6w:type': item.type, // Orijinal tipi koru
+          'ds6w:globalType': item.type,
+          'ds6w:label': item.title || item.name || '',
+          'ds6w:identifier': item.name || '',
+          'ds6w:status': item.state || '',
+          'ds6wg:revision': item.revision || '',
+          'ds6w:created': item.created || '',
+          'ds6w:modified': item.modified || '',
+          'ds6w:responsible': item.owner || '',
+          'ds6w:organization': item.organization || '',
+          'ds6w:project': item.collabspace || '',
+          // MfgItem'a özgü alanlar
+          'dsmfg:manufacturingIntent': item.manufacturingIntent || '',
+          // Orijinal veriyi sakla
+          _original: item
+        };
+        results.push(transformed);
+      }
+    }
+  }
+  
+  // Path objelerini ekle
+  results.push(...pathObjects);
+  
+  return results;
+};
+
+// Handle configuration apply from BomTreeTable - Expand with Configuration Filter (%100 BOM)
+const onApplyConfiguration = async (configData) => {
+  console.log('Apply Configuration:', configData);
+  
+  if (!configData?.configurationId || !rootPhysicalId.value) {
+    console.error('Missing configuration ID or root physical ID');
+    return;
+  }
+  
+  // NOT: loading.value ve result.value'yu burada değiştirmiyoruz
+  // çünkü bu BomTreeTable'ın unmount olmasına ve seçimlerin sıfırlanmasına neden olur
+  // BomTreeTable kendi isApplyingConfig state'ini kullanıyor
+  error.value = null;
+  
+  try {
+    // Config'in yüklendiğinden emin ol
+    await loadConfig();
+    
+    // itemType'a göre farklı API endpoint kullan
+    let url;
+    if (itemType.value === 'CreateAssembly') {
+      // MfgItem için: /resources/v1/modeler/dsmfg/dsmfg:MfgItem/{id}/expand
+      url = getMfgItemFilteredExpandUrl(rootPhysicalId.value);
+    } else {
+      // VPMReference için: /resources/v1/modeler/dseng/dseng:EngItem/{id}/expand
+      url = `/resources/v1/modeler/dseng/dseng:EngItem/${rootPhysicalId.value}/expand?xrequestedwith=xmlhttprequest`;
+    }
+    
+    const requestBody = {
+      expandDepth: -1,
+      withPath: true,
+      filter: {
+        combinationOfSpecification: 'union',
+        keepChildren: true,
+        filterSpecifications: [{
+          filterCriteria: [{
+            criteriaType: 'config',
+            configurationFilterDefinition: {
+              version: '0.2',
+              persistentFilter: {
+                identifier: configData.configurationId,
+                type: 'Product Configuration'
+              }
+            }
+          }]
+        }]
+      }
+    };
+    
+    // MfgItem için ek parametreler
+    if (itemType.value === 'CreateAssembly') {
+      requestBody.type_filter_bo = [];
+      requestBody.type_filter_rel = [];
+    }
+    
+    console.log('Configured BOM Expand Request:', url, requestBody);
+    
+    const response = await Platform3DSpace.call3DSpace({
+      url: url,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: requestBody,
+      type: 'json',
+      includeCSRF: true
+    });
+    
+    console.log('Configured BOM Expand Response:', response);
+    
+    // API hata kontrolü
+    if (response?.errors?.length > 0) {
+      const errorMessages = response.errors.map(e => e.reason || e.message || e.code || JSON.stringify(e)).join(', ');
+      error.value = `Error loading configured BOM: ${errorMessages}`;
+      console.error('Configured BOM Expand API Error:', response.errors);
+      return;
+    }
+    
+    // Response format kontrolü - bu API member array döndürüyor
+    const members = response?.member || [];
+    
+    if (!members.length) {
+      error.value = 'No items found for this configuration.';
+      return;
+    }
+    
+    // Expand API response'unu BomTreeTable'ın beklediği formata dönüştür
+    // itemType'a göre dönüşüm yap
+    let transformedResults;
+    if (itemType.value === 'CreateAssembly') {
+      transformedResults = transformMfgItemResponse(members);
+    } else {
+      // VPMReference için mevcut dönüşüm
+      transformedResults = [];
+      const pathObjects = [];
+      
+      for (const item of members) {
+        if (item.Path) {
+          pathObjects.push(item);
+        } else if (item.id && item.type) {
+          const transformed = {
+            resourceid: item.id,
+            'ds6w:type': item.type,
+            'ds6w:label': item.title || item.name || '',
+            'ds6w:identifier': item.name || '',
+            'ds6w:status': item.state || '',
+            'ds6wg:revision': item.revision || '',
+            'ds6w:created': item.created || '',
+            'ds6w:modified': item.modified || '',
+            'ds6w:responsible': item.owner || '',
+            'ds6w:organization': item.organization || '',
+            'ds6w:project': item.collabspace || '',
+            ...item
+          };
+          transformedResults.push(transformed);
+        }
+      }
+      
+      for (const pathObj of pathObjects) {
+        transformedResults.push(pathObj);
+      }
+    }
+    
+    console.log('Transformed results:', transformedResults);
+    
+    // Ters mapping uygula - API'den gelen mapped key'leri orijinal key'lere dönüştür
+    const cfg = getConfig();
+    const mapping = cfg.attributeMapping || {};
+    const reverseMapping = Object.entries(mapping).reduce((acc, [original, mapped]) => {
+      acc[mapped] = original;
+      return acc;
+    }, {});
+    
+    let results = transformedResults;
+    if (Object.keys(reverseMapping).length > 0) {
+      results = transformedResults.map(item => {
+        const newItem = { ...item };
+        for (const [mappedKey, originalKey] of Object.entries(reverseMapping)) {
+          if (mappedKey in newItem) {
+            newItem[originalKey] = newItem[mappedKey];
+          }
+        }
+        return newItem;
+      });
+    }
+    
+    // Response'u BomTreeTable'ın beklediği formata dönüştür
+    result.value = {
+      results: results,
+      itemType: itemType.value,
+      configurationApplied: {
+        model: configData.model,
+        product: configData.product,
+        configuration: configData.configuration
+      }
+    };
+    
+    // Recent items'a kaydet (mevcut itemType ile)
+    const rootNode = results.find(r => r.resourceid === rootPhysicalId.value);
+    const name = rootNode?.['ds6w:label'] || rootNode?.['ds6w:identifier'] || rootPhysicalId.value;
+    saveRecentItem(rootPhysicalId.value, name, itemType.value);
+    
+    console.log('Configured BOM result set:', result.value);
+    
+  } catch (err) {
+    error.value = `Error loading configured BOM: ${err.message || String(err)}`;
+    console.error('Configured BOM Expand Error:', err);
   } finally {
     loading.value = false;
   }
@@ -551,7 +1053,12 @@ const onColumnsChanged = (columns, skipReload = false) => {
   // Sadece yeni sütun eklendiyse ve data varsa, tekrar yükle
   // Sıralama değişikliği için yeniden yükleme yapma
   if (!skipReload && hasNewColumns && result.value) {
-    expandBOM();
+    // itemType'a göre doğru expand fonksiyonunu çağır
+    if (itemType.value === 'CreateAssembly') {
+      expandMfgBOM();
+    } else {
+      expandBOM();
+    }
   }
 };
 </script>
@@ -595,7 +1102,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, #121c4f 0%, #121c4f 60%, #006193 100%);
+  background: linear-gradient(90deg, #000000 0%, #1a2d4a 40%, #006193 100%);
   border-radius: 8px 8px 0 0;
   position: relative;
   transition: all 0.2s ease;
@@ -644,8 +1151,9 @@ body {
 .banner-title {
   color: white;
   font-size: 29px;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .widget-content {
@@ -659,6 +1167,21 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Error Alert */
+.error-alert {
+  max-height: 60px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.error-alert :deep(.v-alert__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* Warning Toast */
@@ -882,6 +1405,31 @@ body {
   border-radius: 12px 0 0 12px;
 }
 
+.recent-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.recent-panel .panel-header .panel-label {
+  margin-bottom: 0;
+}
+
+.clear-recent-link {
+  font-size: 11px;
+  color: #9e9e9e;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.clear-recent-link:hover {
+  color: #f44336;
+  text-decoration: underline;
+}
+
 .recent-list {
   display: flex;
   flex-direction: column;
@@ -942,12 +1490,18 @@ body {
   border: 2px dashed #c5d9f0;
 }
 
+.drop-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
 .drop-icon {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   opacity: 0.7;
-  margin-bottom: 12px;
 }
 
 .drop-text {

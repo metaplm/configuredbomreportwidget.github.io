@@ -190,6 +190,44 @@ const Platform3DSpace = {
             }, 200);
         });
     },
+    // Refresh CSRF Token
+    refreshCSRFToken() {
+        return new Promise((resolve, reject) => {
+            const tenant = PlatformInterface.getCurrentTenant();
+            const url3DSpace = PlatformInterface.getUrlForTenantAndService(tenant, "3DSpace");
+            
+            if (!url3DSpace) {
+                reject(new Error(`No 3DSpace url found for tenant: ${tenant}`));
+                return;
+            }
+            
+            const csrfPath = "/resources/v1/application/CSRF";
+            requirejs(["DS/WAFData/WAFData"], WAFData => {
+                WAFData.authenticatedRequest(url3DSpace + csrfPath, {
+                    method: "GET",
+                    headers: {
+                        SecurityContext: currentSecCtx || ""
+                    },
+                    data: {},
+                    type: "json",
+                    onComplete: response => {
+                        if (response.csrf?.value) {
+                            currentCSRFToken = response.csrf.value;
+                            console.log("CSRF Token refreshed");
+                            resolve(currentCSRFToken);
+                        } else {
+                            reject(new Error("CSRF token not found in response"));
+                        }
+                    },
+                    onFailure: error => {
+                        console.error("Error refreshing CSRF token:", error);
+                        reject(error);
+                    }
+                });
+            });
+        });
+    },
+
     call3DSpace({
         tenant,
         url,
@@ -202,45 +240,78 @@ const Platform3DSpace = {
         includeCSRF = false
     }) {
         return new Promise((resolve, reject) => {
-            const doCall = () => {
-                this.waitUntilSecurityContextSet(10000).then(() => {
+            const doCall = async () => {
+                try {
+                    await this.waitUntilSecurityContextSet(10000);
                     console.log("executing call3DSpace");
                     tenant = PlatformInterface.getCurrentTenant();
                     const url3DSpace = PlatformInterface.getUrlForTenantAndService(tenant, "3DSpace");
                     headers.SecurityContext = currentSecCtx;
-                    if (includeCSRF || method === "POST" || method === "PATCH" || method === "PUT") {
+                    
+                    // For POST/PATCH/PUT/DELETE, ensure CSRF token is fresh
+                    if (includeCSRF || method === "POST" || method === "PATCH" || method === "PUT" || method === "DELETE") {
+                        // If no token or it might be stale, refresh it
+                        if (!currentCSRFToken) {
+                            console.log("CSRF token missing, refreshing...");
+                            await this.refreshCSRFToken();
+                        }
                         headers.ENO_CSRF_TOKEN = currentCSRFToken;
                     }
 
                     if (!url3DSpace) {
                         reject(new Error(`No 3DSpace url found for the tenant: ${tenant}`));
+                        return;
                     }
 
                     if (includePlatform) url += "&platform=" + tenant;
-                    PlatformInterface.callWebService({
+                    
+                    const response = await PlatformInterface.callWebService({
                         method: method,
                         url: url3DSpace + url,
                         headers: headers,
                         data: data,
                         type: type,
                         dataType: dataType
-                    })
-                    .then((response) => {
-                            if (response.body.error) {
-                                throw new Error(response.body.error);
+                    });
+                    
+                    if (response.body.error) {
+                        throw new Error(response.body.error);
+                    } else {
+                        resolve(response.body);
+                    }
+                } catch (error) {
+                    // If CSRF token error, try to refresh and retry once
+                    if (error?.message?.includes('CSRF') || error?.body?.message?.includes('CSRF')) {
+                        console.log("CSRF error detected, refreshing token and retrying...");
+                        try {
+                            await this.refreshCSRFToken();
+                            headers.ENO_CSRF_TOKEN = currentCSRFToken;
+                            
+                            const retryResponse = await PlatformInterface.callWebService({
+                                method: method,
+                                url: PlatformInterface.getUrlForTenantAndService(tenant, "3DSpace") + url,
+                                headers: headers,
+                                data: data,
+                                type: type,
+                                dataType: dataType
+                            });
+                            
+                            if (retryResponse.body.error) {
+                                throw new Error(retryResponse.body.error);
                             } else {
-                                resolve(response.body);
+                                resolve(retryResponse.body);
                             }
-                    })
-                    .catch(error => {
+                        } catch (retryError) {
+                            console.error("Retry after CSRF refresh also failed:", retryError);
+                            reject(retryError);
+                        }
+                    } else {
                         console.error(error);
                         reject(error);
-                    });
-                })
-                .catch(error => {
-                    reject(error);
-                });
+                    }
+                }
             };
+            
             if (!Platform3DSpace.isLoaded()) {
                 Platform3DSpace.loadSecurityContexts()
                     .then(() => {

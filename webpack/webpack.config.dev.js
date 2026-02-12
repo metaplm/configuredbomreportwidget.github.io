@@ -24,7 +24,11 @@ module.exports = merge(
             })
         ],
         devServer: {
-            static: "./dist",
+            static: [
+                "./dist", 
+                "./public", 
+                { directory: "./src/static", publicPath: "/configuredbomwidget/static" }
+            ],
             hot: true,
             compress: true,
             allowedHosts: "all",

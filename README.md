@@ -339,6 +339,10 @@ const cfg = {
 - `dev.devServer.host`: Server host adresi
 - `dev.devServer.port`: Server port numarası
 
+### 3DEXPERIENCE Cloud
+
+Varsayılan config Cloud içindir (`config.json`: tenant, contextId, `/enovia/` path). Kendi ortamınız için `public/config.json` içindeki `tenant` ve `contextId` değerlerini güncelleyin.
+
 ---
 
 ## Troubleshooting

@@ -7,7 +7,7 @@ function start() {
     x3DDashboardUtils.disableCSS(true);
 
     // add title to widget container
-    window.title = "Baykar BOM Report Widget";
+    window.title = "MetaPLM";
     widget.setTitle(window.title);
 
     const app = createApp(App);

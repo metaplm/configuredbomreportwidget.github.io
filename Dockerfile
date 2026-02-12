@@ -11,10 +11,10 @@ COPY . .
 RUN PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install
 
 # Port bilgisini environment variable olarak ayarla
-ENV PORT=8894
+ENV PORT=8895
 
 # Portu expose et
-EXPOSE 8894
+EXPOSE 8895
 
 # Uygulamayı başlat
 CMD ["npm", "run", "start"]
