@@ -12,7 +12,7 @@
           @drop.prevent="result && onDrop($event)"
         >
           <img :src="getImagePath('zenvo_logo.png') + '?v=2'" alt="Zenvo" class="banner-logo" />
-          <span class="banner-title">MBOM/EBOM Report</span>
+          <span class="banner-title">MBOM/EBOM Report <span class="banner-version">{{ APP_VERSION }}</span></span>
           <div v-if="isDragOver && result" class="banner-drop-hint">
             <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
             <span>New Product Structure</span>
@@ -215,6 +215,8 @@ import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
 import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, applyAttributeMapping, getConfig, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
+
+const APP_VERSION = 'v1.1';
 
 const loading = ref(false);
 const loadingAttributes = ref(false);
