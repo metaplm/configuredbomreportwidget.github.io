@@ -30,10 +30,17 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Versions
+        run: node -v && npm -v
+
       - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
         run: npm ci
 
       - name: Build
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
         run: npm run build
 
       - name: Upload Pages artifact
