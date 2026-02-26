@@ -1206,6 +1206,14 @@ body {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+.banner-version {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-left: 6px;
+  vertical-align: baseline;
+}
+
 .widget-content {
   padding: 0;
   background: white;
