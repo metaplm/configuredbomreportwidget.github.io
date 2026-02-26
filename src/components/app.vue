@@ -619,10 +619,28 @@ const expandBOM = async () => {
   error.value = null;
   result.value = null;
 
-  try {
-    // Config'in yüklendiğinden emin ol
-    await loadConfig();
-    
+  const normalizeSelectObjectAttribute = (attr) => {
+    const a = String(attr || '');
+    if (a.startsWith('ds6wg:XP_')) return a.slice('ds6wg:'.length);
+    return a;
+  };
+
+  const extractOffendingAttributes = (errors = []) => {
+    const attrs = new Set();
+    for (const e of errors) {
+      const raw = String(e?.reason ?? e?.message ?? e?.code ?? '');
+      const matches = raw.match(/\[[^\]]+\]/g) || [];
+      for (const m of matches) {
+        const attr = m.slice(1, -1).trim();
+        if (attr) attrs.add(attr);
+      }
+    }
+    return Array.from(attrs);
+  };
+
+  const callExpand = async (selectObjectOverride = null) => {
+    const selectObject = (selectObjectOverride || applyAttributeMapping(selectObjectFields.value))
+      .map(normalizeSelectObjectAttribute);
     const requestBody = {
       batch: {
         expands: [{
@@ -641,7 +659,6 @@ const expandBOM = async () => {
               }]
             }
           },
-          // Cloud ortamında progressive expand için gerekli (graph yoksa yanıt dönmeyebilir)
           graph: {
             descending_condition: { uql: 'availability:2' },
             descending_condition_object: { uql: '[ds6w:globaltype]:"ds6w:Document" OR [ds6w:globaltype]:"ds6w:Part"' },
@@ -650,7 +667,7 @@ const expandBOM = async () => {
         }]
       },
       outputs: {
-        select_object: applyAttributeMapping(selectObjectFields.value),
+        select_object: selectObject,
         select_relation: [
           'physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:identifier', 'ds6w:label',
           'matrixtxt', 'ro.pgpshowextension.V_PGP_Show', 'ro.plminstance.v_treeorder'
@@ -664,7 +681,7 @@ const expandBOM = async () => {
       }
     };
 
-    const response = await Platform3DSpace.call3DSpace({
+    return Platform3DSpace.call3DSpace({
       url: getBomExpandUrl(),
       method: 'POST',
       headers: {
@@ -673,6 +690,13 @@ const expandBOM = async () => {
       data: requestBody,
       type: 'json'
     });
+  };
+
+  try {
+    // Config'in yüklendiğinden emin ol
+    await loadConfig();
+
+    let response = await callExpand();
 
     console.log('BOM Expand Response:', response);
     
@@ -684,9 +708,25 @@ const expandBOM = async () => {
         showWarning(`Some attributes could not be loaded: ${errorMessages}`);
         console.warn('BOM Expand API warnings (continuing with available data):', response.errors);
       } else {
-        error.value = `Error loading product structure: ${errorMessages}`;
-        console.error('BOM Expand API Error:', response.errors);
-        return;
+        const offending = extractOffendingAttributes(response.errors);
+        if (offending.length > 0) {
+          const currentSelect = applyAttributeMapping(selectObjectFields.value);
+          const filteredSelect = currentSelect.filter(a => !offending.includes(a));
+          if (filteredSelect.length !== currentSelect.length) {
+            console.warn('Retrying BOM expand without offending attributes:', offending);
+            response = await callExpand(filteredSelect);
+            console.log('BOM Expand Response (retry):', response);
+            if (response?.results?.length > 0) {
+              showWarning(`Some attributes could not be loaded and were skipped: ${offending.join(', ')}`);
+            }
+          }
+        }
+
+        if (response?.errors?.length > 0 && !response?.results?.length) {
+          error.value = `Error loading product structure: ${errorMessages}`;
+          console.error('BOM Expand API Error:', response.errors);
+          return;
+        }
       }
     }
     
