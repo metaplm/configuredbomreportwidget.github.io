@@ -648,7 +648,7 @@ const expandBOM = async () => {
   };
 
   const callExpand = async (selectObjectOverride = null) => {
-    const selectObject = (selectObjectOverride || applyAttributeMapping(selectObjectFields.value))
+    const selectObject = (selectObjectOverride || selectObjectFields.value)
       .map(normalizeSelectObjectAttribute);
     const requestBody = {
       batch: {
@@ -719,7 +719,7 @@ const expandBOM = async () => {
       } else {
         const offending = extractOffendingAttributes(response.errors);
         if (offending.length > 0) {
-          const currentSelect = applyAttributeMapping(selectObjectFields.value)
+          const currentSelect = selectObjectFields.value
             .map(normalizeSelectObjectAttribute);
           const filteredSelect = currentSelect.filter(a => !offending.includes(normalizeSelectObjectAttribute(a)));
           if (filteredSelect.length !== currentSelect.length) {
