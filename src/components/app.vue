@@ -214,7 +214,7 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
-import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, applyAttributeMapping, getConfig, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
+import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
 
 const APP_VERSION = 'v1.1';
 
@@ -532,9 +532,7 @@ const loadCustomAttributes = async () => {
       const ebomAttrs = ebomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
-            ? attr.sixWTag
-            : `ds6wg:${attr.m1Name}`;
+          const key = `ds6wg:${attr.m1Name}`;
           return {
             key,
             label: attr.nlsName || attr.internalName,
@@ -744,30 +742,6 @@ const expandBOM = async () => {
     if (!response?.results?.length) {
       error.value = 'Product structure not found or empty.';
       return;
-    }
-    
-    // Ters mapping uygula - API'den gelen mapped key'leri orijinal key'lere dönüştür
-    const cfg = getConfig();
-    const mapping = cfg.attributeMapping || {};
-    // Ters mapping oluştur: { "Baykar:Material": "ds6wg:XP_VPMReference_Ext.Material" }
-    const reverseMapping = Object.entries(mapping).reduce((acc, [original, mapped]) => {
-      acc[mapped] = original;
-      return acc;
-    }, {});
-    
-    // Her result objesindeki key'leri dönüştür
-    if (Object.keys(reverseMapping).length > 0) {
-      response.results = response.results.map(item => {
-        const newItem = { ...item };
-        for (const [mappedKey, originalKey] of Object.entries(reverseMapping)) {
-          if (mappedKey in newItem) {
-            newItem[originalKey] = newItem[mappedKey];
-            // Mapped key'i de tut (isteğe bağlı silinebilir)
-            // delete newItem[mappedKey];
-          }
-        }
-        return newItem;
-      });
     }
     
     result.value = response;
@@ -1042,27 +1016,8 @@ const onApplyConfiguration = async (configData) => {
     
     console.log('Transformed results:', transformedResults);
     
-    // Ters mapping uygula - API'den gelen mapped key'leri orijinal key'lere dönüştür
-    const cfg = getConfig();
-    const mapping = cfg.attributeMapping || {};
-    const reverseMapping = Object.entries(mapping).reduce((acc, [original, mapped]) => {
-      acc[mapped] = original;
-      return acc;
-    }, {});
-    
     let results = transformedResults;
-    if (Object.keys(reverseMapping).length > 0) {
-      results = transformedResults.map(item => {
-        const newItem = { ...item };
-        for (const [mappedKey, originalKey] of Object.entries(reverseMapping)) {
-          if (mappedKey in newItem) {
-            newItem[originalKey] = newItem[mappedKey];
-          }
-        }
-        return newItem;
-      });
-    }
-    
+
     // Response'u BomTreeTable'ın beklediği formata dönüştür
     result.value = {
       results: results,
