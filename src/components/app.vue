@@ -623,7 +623,8 @@ const expandBOM = async () => {
 
   const normalizeSelectObjectAttribute = (attr) => {
     const a = String(attr || '');
-    if (a.startsWith('ds6wg:XP_')) return a.slice('ds6wg:'.length);
+    // Progressive expand expects extension attributes as ds6wg:XP_* (see cvservlet examples)
+    if (a.startsWith('XP_')) return `ds6wg:${a}`;
     return a;
   };
 
@@ -633,8 +634,14 @@ const expandBOM = async () => {
       const raw = String(e?.reason ?? e?.message ?? e?.code ?? '');
       const matches = raw.match(/\[[^\]]+\]/g) || [];
       for (const m of matches) {
-        const attr = m.slice(1, -1).trim();
-        if (attr) attrs.add(attr);
+        const inner = m.slice(1, -1);
+        // Some errors return a single bracket containing a comma-separated list of metas.
+        // Example: [XP_VPMReference_Ext.A, XP_VPMReference_Ext.B]
+        const parts = inner.split(',').map(p => p.trim()).filter(Boolean);
+        for (const part of parts) {
+          const cleaned = part.replace(/^"|"$/g, '').trim();
+          if (cleaned) attrs.add(normalizeSelectObjectAttribute(cleaned));
+        }
       }
     }
     return Array.from(attrs);
@@ -712,8 +719,9 @@ const expandBOM = async () => {
       } else {
         const offending = extractOffendingAttributes(response.errors);
         if (offending.length > 0) {
-          const currentSelect = applyAttributeMapping(selectObjectFields.value);
-          const filteredSelect = currentSelect.filter(a => !offending.includes(a));
+          const currentSelect = applyAttributeMapping(selectObjectFields.value)
+            .map(normalizeSelectObjectAttribute);
+          const filteredSelect = currentSelect.filter(a => !offending.includes(normalizeSelectObjectAttribute(a)));
           if (filteredSelect.length !== currentSelect.length) {
             console.warn('Retrying BOM expand without offending attributes:', offending);
             response = await callExpand(filteredSelect);
