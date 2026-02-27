@@ -51,6 +51,15 @@
             <div class="section-header mt-3">
               <span>EBOM Custom</span>
               <v-chip size="x-small" color="blue">{{ ebomCustomColumns.length }}</v-chip>
+              <v-checkbox
+                :model-value="ebomAllSelected"
+                :indeterminate="ebomIndeterminate"
+                density="compact"
+                hide-details
+                color="blue"
+                class="select-all-checkbox"
+                @update:model-value="toggleSelectAllEbom"
+              />
             </div>
             <div v-if="ebomCustomColumns.length > 0" class="columns-grid">
               <div 
@@ -79,6 +88,15 @@
             <div class="section-header mt-3">
               <span>MBOM Custom</span>
               <v-chip size="x-small" color="purple">{{ mbomCustomColumns.length }}</v-chip>
+              <v-checkbox
+                :model-value="mbomAllSelected"
+                :indeterminate="mbomIndeterminate"
+                density="compact"
+                hide-details
+                color="purple"
+                class="select-all-checkbox"
+                @update:model-value="toggleSelectAllMbom"
+              />
             </div>
             <div v-if="mbomCustomColumns.length > 0" class="columns-grid">
               <div 
@@ -230,6 +248,33 @@ const mbomCustomColumns = computed(() => {
   return props.availableColumns.filter(col => col.category === 'mbom_custom' || col.category === 'shared_custom');
 });
 
+const ebomCustomKeys = computed(() => ebomCustomColumns.value.map(c => c.key));
+const mbomCustomKeys = computed(() => mbomCustomColumns.value.map(c => c.key));
+
+const ebomAllSelected = computed(() => {
+  const keys = ebomCustomKeys.value;
+  return keys.length > 0 && keys.every(k => localSelectedColumns.value.includes(k));
+});
+
+const ebomIndeterminate = computed(() => {
+  const keys = ebomCustomKeys.value;
+  if (keys.length === 0) return false;
+  const selectedCount = keys.filter(k => localSelectedColumns.value.includes(k)).length;
+  return selectedCount > 0 && selectedCount < keys.length;
+});
+
+const mbomAllSelected = computed(() => {
+  const keys = mbomCustomKeys.value;
+  return keys.length > 0 && keys.every(k => localSelectedColumns.value.includes(k));
+});
+
+const mbomIndeterminate = computed(() => {
+  const keys = mbomCustomKeys.value;
+  if (keys.length === 0) return false;
+  const selectedCount = keys.filter(k => localSelectedColumns.value.includes(k)).length;
+  return selectedCount > 0 && selectedCount < keys.length;
+});
+
 // Backward compatibility - tüm custom columns
 const customColumns = computed(() => {
   return props.availableColumns.filter(col => col.category === 'ebom_custom' || col.category === 'mbom_custom' || col.category === 'shared_custom' || col.category === 'custom');
@@ -273,6 +318,28 @@ const toggleColumn = (key, selected) => {
     }
   } else {
     localSelectedColumns.value = localSelectedColumns.value.filter(k => k !== key);
+  }
+};
+
+const toggleSelectAllEbom = (selected) => {
+  const keys = ebomCustomKeys.value;
+  if (keys.length === 0) return;
+  if (selected) {
+    const toAdd = keys.filter(k => !localSelectedColumns.value.includes(k));
+    localSelectedColumns.value = [...localSelectedColumns.value, ...toAdd];
+  } else {
+    localSelectedColumns.value = localSelectedColumns.value.filter(k => !keys.includes(k));
+  }
+};
+
+const toggleSelectAllMbom = (selected) => {
+  const keys = mbomCustomKeys.value;
+  if (keys.length === 0) return;
+  if (selected) {
+    const toAdd = keys.filter(k => !localSelectedColumns.value.includes(k));
+    localSelectedColumns.value = [...localSelectedColumns.value, ...toAdd];
+  } else {
+    localSelectedColumns.value = localSelectedColumns.value.filter(k => !keys.includes(k));
   }
 };
 
@@ -446,6 +513,10 @@ const applySelection = () => {
   margin-bottom: 6px;
   color: #616161;
   text-transform: uppercase;
+}
+
+.select-all-checkbox {
+  margin-left: auto;
 }
 
 .columns-grid {
