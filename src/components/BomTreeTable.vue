@@ -62,6 +62,9 @@
         <button class="toolbar-btn" @click="emit('close')" data-tooltip="Close">
           <svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" fill="currentColor"/></svg>
         </button>
+        <button class="toolbar-btn" @click="emit('refresh')" data-tooltip="Refresh" :disabled="isExpandingAny">
+          <svg viewBox="0 0 24 24"><path d="M12,18A6,6 0 0,1 6,12C6,10.21 6.78,8.61 8,7.5V10H10V4H4V6H6.5C4.96,7.61 4,9.78 4,12A8,8 0 0,0 12,20A8,8 0 0,0 19.93,13H17.85A6,6 0 0,1 12,18M20,12A8,8 0 0,0 12,4A8,8 0 0,0 4.07,11H6.15A6,6 0 0,1 12,6A6,6 0 0,1 18,12C18,13.79 17.22,15.39 16,16.5V14H14V20H20V18H17.5C19.04,16.39 20,14.22 20,12Z" fill="currentColor"/></svg>
+        </button>
         <div class="toolbar-divider"></div>
         <button class="toolbar-btn" @click="emit('open-columns')" data-tooltip="Columns" :disabled="isExpandingAny">
           <svg viewBox="0 0 24 24"><path d="M3,4H7V8H3V4M9,5V7H21V5H9M3,10H7V14H3V10M9,11V13H21V11H9M3,16H7V20H3V16M9,17V19H21V17H9" fill="currentColor"/></svg>
@@ -387,7 +390,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:selected-columns', 'update:column-widths', 'open-columns', 'close', 'apply-configuration']);
+const emit = defineEmits(['update:selected-columns', 'update:column-widths', 'open-columns', 'close', 'refresh', 'apply-configuration']);
 
 const treeData = ref([]);
 

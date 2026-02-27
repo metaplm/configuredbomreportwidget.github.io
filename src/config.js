@@ -13,10 +13,6 @@ const defaultConfig = {
     bomExpand: '/cvservlet/progressiveexpand/v2',
     customAttributes: '/resources/ParamWS/datamodel/listofattributesfortype',
     ecosystem: '/resources/enorelnav/v2/navigate/getEcosystem'
-  },
-  attributeMapping: {
-    "ds6wg:XP_VPMReference_Ext.Makebuy": "Zenvo_Vocab:Makebuy",
-    "ds6wg:XP_VPMReference_Ext.Car_System": "ds6w:browsingStructure1"
   }
 };
 
@@ -43,7 +39,6 @@ export const loadConfig = async (forceReload = false) => {
     if (response.ok) {
       runtimeConfig = await response.json();
       console.log('[Config] Runtime config yüklendi:', runtimeConfig);
-      console.log('[Config] attributeMapping:', runtimeConfig.attributeMapping);
     } else {
       console.warn('[Config] config.json bulunamadı, varsayılan değerler kullanılıyor');
       runtimeConfig = { ...defaultConfig };
@@ -155,50 +150,6 @@ export const getMfgItemConfiguredUrl = (physicalId) => {
  */
 export const getMfgItemFilteredExpandUrl = (physicalId) => {
   return `/resources/v1/modeler/dsmfg/dsmfg:MfgItem/${physicalId}/expand?xrequestedwith=xmlhttprequest`;
-};
-
-/**
- * Attribute mapping'i uygular
- * Config'deki attributeMapping değerlerini kullanarak attribute isimlerini dönüştürür
- * @param {string[]} attributes - Dönüştürülecek attribute listesi
- * @returns {string[]} Dönüştürülmüş attribute listesi
- */
-export const applyAttributeMapping = (attributes) => {
-  const config = getConfig();
-  const mapping = config.attributeMapping || {};
-  
-  console.log('[Config] applyAttributeMapping called');
-  console.log('[Config] Input attributes:', attributes);
-  console.log('[Config] Mapping config:', mapping);
-  
-  const result = attributes.map(attr => {
-    const mapped = mapping[attr];
-    if (mapped) {
-      console.log(`[Config] Mapping: "${attr}" -> "${mapped}"`);
-    }
-    return mapped || attr;
-  });
-  
-  console.log('[Config] Output attributes:', result);
-  return result;
-};
-
-/**
- * Ters attribute mapping'i uygular (response'dan gelen değerleri geri dönüştürür)
- * @param {string} attr - Dönüştürülecek attribute
- * @returns {string} Orijinal attribute adı
- */
-export const reverseAttributeMapping = (attr) => {
-  const config = getConfig();
-  const mapping = config.attributeMapping || {};
-  
-  // Ters mapping oluştur
-  const reverseMap = Object.entries(mapping).reduce((acc, [key, value]) => {
-    acc[value] = key;
-    return acc;
-  }, {});
-  
-  return reverseMap[attr] || attr;
 };
 
 // Geriye uyumluluk için default export

@@ -107,6 +107,7 @@
                 @update:column-widths="onColumnWidthsChanged"
                 @open-columns="showColumnSelector = true"
                 @close="closeBOM"
+                @refresh="refreshBOM"
                 @apply-configuration="onApplyConfiguration"
               />
 
@@ -216,7 +217,7 @@ import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
 import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
 
-const APP_VERSION = 'v1.1';
+const APP_VERSION = 'v1.2';
 
 const loading = ref(false);
 const loadingAttributes = ref(false);
@@ -440,6 +441,11 @@ function closeBOM() {
   itemType.value = 'VPMReference'; // Varsayılana dön
 }
 
+async function refreshBOM() {
+  if (!rootPhysicalId.value || loading.value) return;
+  await expandBOM();
+}
+
 // Varsayılan sütunlar
 const defaultColumns = ['ds6w:label', '_qty', '_subqty', '_totalqty', 'ds6wg:revision', 'ds6w:status', 'ds6w:responsible'];
 
@@ -532,7 +538,9 @@ const loadCustomAttributes = async () => {
       const ebomAttrs = ebomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = `ds6wg:${attr.m1Name}`;
+          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
+            ? attr.sixWTag
+            : `ds6wg:${attr.m1Name}`;
           return {
             key,
             label: attr.nlsName || attr.internalName,
@@ -541,6 +549,7 @@ const loadCustomAttributes = async () => {
             type: attr.type,
             internalName: attr.internalName,
             m1Name: attr.m1Name
+            ,sixWTag: attr.sixWTag
           };
         });
       allCustomColumns.push(...ebomAttrs);
@@ -562,7 +571,8 @@ const loadCustomAttributes = async () => {
             category: 'mbom_custom',
             type: attr.type,
             internalName: attr.internalName,
-            m1Name: attr.m1Name
+            m1Name: attr.m1Name,
+            sixWTag: attr.sixWTag
           };
         });
       allCustomColumns.push(...mbomAttrs);
@@ -620,9 +630,15 @@ const expandBOM = async () => {
   result.value = null;
 
   const normalizeSelectObjectAttribute = (attr) => {
-    const a = String(attr || '');
+    let a = String(attr || '').trim();
     // Progressive expand expects extension attributes as ds6wg:XP_* (see cvservlet examples)
-    if (a.startsWith('XP_')) return `ds6wg:${a}`;
+    if (a.startsWith('XP_')) a = `ds6wg:${a}`;
+    // If we have a deployed attribute whose sixWTag is defined (e.g. Zenvo_Vocab:Makebuy),
+    // we must use that meta instead of the ds6wg:XP_* form.
+    if (a.startsWith('ds6wg:XP_')) {
+      const match = customColumns.value.find(c => c.key === a && c.sixWTag && String(c.sixWTag).trim() !== '');
+      if (match) return match.sixWTag;
+    }
     return a;
   };
 
@@ -1193,6 +1209,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
