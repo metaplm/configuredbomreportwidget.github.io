@@ -542,16 +542,17 @@ const loadCustomAttributes = async () => {
       const ebomAttrs = ebomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = `ds6wg:${attr.m1Name}`;
+          const key = `ebom:${attr.internalName}`;
           return {
             key,
-            label: attr.nlsName || attr.internalName,
+            label: `${attr.nlsName || attr.internalName} (EBOM)`,
             required: false,
             category: 'ebom_custom',
             type: attr.type,
             internalName: attr.internalName,
             m1Name: attr.m1Name,
-            sixWTag: attr.sixWTag
+            sixWTag: attr.sixWTag,
+            apiKey: (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `ds6wg:${attr.m1Name}`
           };
         });
       allCustomColumns.push(...ebomAttrs);
@@ -563,18 +564,17 @@ const loadCustomAttributes = async () => {
       const mbomAttrs = mbomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
-            ? attr.sixWTag
-            : `dsmfg:${attr.m1Name}`;
+          const key = `mbom:${attr.internalName}`;
           return {
             key,
-            label: attr.nlsName || attr.internalName,
+            label: `${attr.nlsName || attr.internalName} (MBOM)`,
             required: false,
             category: 'mbom_custom',
             type: attr.type,
             internalName: attr.internalName,
             m1Name: attr.m1Name,
-            sixWTag: attr.sixWTag
+            sixWTag: attr.sixWTag,
+            apiKey: (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `dsmfg:${attr.m1Name}`
           };
         });
       allCustomColumns.push(...mbomAttrs);
@@ -637,18 +637,13 @@ const expandBOM = async () => {
 
   const normalizeSelectObjectAttribute = (attr) => {
     let a = String(attr || '').trim();
+    // If it's our internal ebom:/mbom: key, use the precomputed apiKey
+    if (a.startsWith('ebom:') || a.startsWith('mbom:')) {
+      const match = customColumns.value.find(c => c.key === a);
+      if (match && match.apiKey) return match.apiKey;
+    }
     // Progressive expand expects extension attributes as ds6wg:XP_* (see cvservlet examples)
     if (a.startsWith('XP_')) a = `ds6wg:${a}`;
-    // If we have a deployed attribute whose sixWTag is defined (e.g. Zenvo_Vocab:Makebuy),
-    // we must use that meta instead of the ds6wg:XP_* form.
-    if (a.startsWith('ds6wg:XP_')) {
-      const m1Name = a.slice('ds6wg:'.length);
-      const match = customColumns.value.find(c =>
-        (c.key === a || c.m1Name === m1Name || `ds6wg:${c.m1Name}` === a) &&
-        c.sixWTag && String(c.sixWTag).trim() !== ''
-      );
-      if (match) return String(match.sixWTag).trim();
-    }
     return a;
   };
 
