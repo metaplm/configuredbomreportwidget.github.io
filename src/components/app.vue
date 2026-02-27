@@ -443,7 +443,11 @@ function closeBOM() {
 
 async function refreshBOM() {
   if (!rootPhysicalId.value || loading.value) return;
-  await expandBOM();
+  if (itemType.value === 'CreateAssembly') {
+    await expandMfgBOM();
+  } else {
+    await expandBOM();
+  }
 }
 
 // Varsayılan sütunlar
