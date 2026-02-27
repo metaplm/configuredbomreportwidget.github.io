@@ -220,19 +220,19 @@ const ootbColumns = computed(() => {
   return props.availableColumns.filter(col => col.category === 'ootb');
 });
 
-// EBOM Custom Attributes (VPMReference)
+// EBOM Custom Attributes (VPMReference) + shared
 const ebomCustomColumns = computed(() => {
-  return props.availableColumns.filter(col => col.category === 'ebom_custom');
+  return props.availableColumns.filter(col => col.category === 'ebom_custom' || col.category === 'shared_custom');
 });
 
-// MBOM Custom Attributes (DELFmiFunctionPPRReference)
+// MBOM Custom Attributes (DELFmiFunctionPPRReference) + shared
 const mbomCustomColumns = computed(() => {
-  return props.availableColumns.filter(col => col.category === 'mbom_custom');
+  return props.availableColumns.filter(col => col.category === 'mbom_custom' || col.category === 'shared_custom');
 });
 
 // Backward compatibility - tüm custom columns
 const customColumns = computed(() => {
-  return props.availableColumns.filter(col => col.category === 'ebom_custom' || col.category === 'mbom_custom' || col.category === 'custom');
+  return props.availableColumns.filter(col => col.category === 'ebom_custom' || col.category === 'mbom_custom' || col.category === 'shared_custom' || col.category === 'custom');
 });
 
 // Sıralanmış sütunlar (ds6w:label hariç)
