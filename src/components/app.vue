@@ -503,6 +503,8 @@ const selectedColumns = ref(loadSavedColumns());
 // Kolon genişlikleri
 const columnWidths = ref(loadSavedColumnWidths());
 
+let customAttributesLoadPromise = null;
+
 // Kolon genişlikleri değiştiğinde
 const onColumnWidthsChanged = (widths) => {
   columnWidths.value = widths;
@@ -511,8 +513,10 @@ const onColumnWidthsChanged = (widths) => {
 
 // Custom attributes'ları API'den yükle (EBOM ve MBOM)
 const loadCustomAttributes = async () => {
-  loadingAttributes.value = true;
-  try {
+  if (customAttributesLoadPromise) return customAttributesLoadPromise;
+  customAttributesLoadPromise = (async () => {
+    loadingAttributes.value = true;
+    try {
     // EBOM için VPMReference attributes
     const ebomPromise = Platform3DSpace.call3DSpace({
       url: getCustomAttributesUrl('VPMReference'),
@@ -538,9 +542,7 @@ const loadCustomAttributes = async () => {
       const ebomAttrs = ebomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '')
-            ? attr.sixWTag
-            : `ds6wg:${attr.m1Name}`;
+          const key = `ds6wg:${attr.m1Name}`;
           return {
             key,
             label: attr.nlsName || attr.internalName,
@@ -548,8 +550,8 @@ const loadCustomAttributes = async () => {
             category: 'ebom_custom',
             type: attr.type,
             internalName: attr.internalName,
-            m1Name: attr.m1Name
-            ,sixWTag: attr.sixWTag
+            m1Name: attr.m1Name,
+            sixWTag: attr.sixWTag
           };
         });
       allCustomColumns.push(...ebomAttrs);
@@ -581,11 +583,13 @@ const loadCustomAttributes = async () => {
     
     customColumns.value = allCustomColumns;
     console.log('Total Custom Attributes loaded:', customColumns.value.length);
-  } catch (err) {
-    console.error('Error loading custom attributes:', err);
-  } finally {
-    loadingAttributes.value = false;
-  }
+    } catch (err) {
+      console.error('Error loading custom attributes:', err);
+    } finally {
+      loadingAttributes.value = false;
+    }
+  })();
+  return customAttributesLoadPromise;
 };
 
 // Component mount olduğunda custom attributes'ları yükle
@@ -593,7 +597,7 @@ onMounted(async () => {
   // Runtime config'i yükle (force reload ile cache'i bypass et)
   await loadConfig(true);
   // Custom attribute'ları yükle
-  loadCustomAttributes();
+  await loadCustomAttributes();
 });
 
 // select_object için kullanılacak alanlar
@@ -629,6 +633,8 @@ const expandBOM = async () => {
   error.value = null;
   result.value = null;
 
+  await loadCustomAttributes();
+
   const normalizeSelectObjectAttribute = (attr) => {
     let a = String(attr || '').trim();
     // Progressive expand expects extension attributes as ds6wg:XP_* (see cvservlet examples)
@@ -636,8 +642,12 @@ const expandBOM = async () => {
     // If we have a deployed attribute whose sixWTag is defined (e.g. Zenvo_Vocab:Makebuy),
     // we must use that meta instead of the ds6wg:XP_* form.
     if (a.startsWith('ds6wg:XP_')) {
-      const match = customColumns.value.find(c => c.key === a && c.sixWTag && String(c.sixWTag).trim() !== '');
-      if (match) return match.sixWTag;
+      const m1Name = a.slice('ds6wg:'.length);
+      const match = customColumns.value.find(c =>
+        (c.key === a || c.m1Name === m1Name || `ds6wg:${c.m1Name}` === a) &&
+        c.sixWTag && String(c.sixWTag).trim() !== ''
+      );
+      if (match) return String(match.sixWTag).trim();
     }
     return a;
   };
