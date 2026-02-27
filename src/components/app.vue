@@ -538,46 +538,54 @@ const loadCustomAttributes = async () => {
     const allCustomColumns = [];
     
     // EBOM custom attributes
+    const seenKeys = new Set();
     if (ebomResponse?.attributeDescription) {
       const ebomAttrs = ebomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = `ebom:${attr.internalName}`;
+          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `ds6wg:${attr.m1Name}`;
           return {
             key,
-            label: `${attr.nlsName || attr.internalName} (EBOM)`,
+            label: attr.nlsName || attr.internalName,
             required: false,
             category: 'ebom_custom',
             type: attr.type,
             internalName: attr.internalName,
             m1Name: attr.m1Name,
-            sixWTag: attr.sixWTag,
-            apiKey: (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `ds6wg:${attr.m1Name}`
+            sixWTag: attr.sixWTag
           };
         });
-      allCustomColumns.push(...ebomAttrs);
+      ebomAttrs.forEach(a => { seenKeys.add(a.key); allCustomColumns.push(a); });
       console.log('EBOM Custom Attributes loaded:', ebomAttrs.length);
     }
     
-    // MBOM custom attributes
+    // MBOM custom attributes (mark shared keys, skip pure duplicates)
     if (mbomResponse?.attributeDescription) {
       const mbomAttrs = mbomResponse.attributeDescription
         .filter(attr => attr.isDeployed)
         .map(attr => {
-          const key = `mbom:${attr.internalName}`;
+          const key = (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `dsmfg:${attr.m1Name}`;
           return {
             key,
-            label: `${attr.nlsName || attr.internalName} (MBOM)`,
+            label: attr.nlsName || attr.internalName,
             required: false,
             category: 'mbom_custom',
             type: attr.type,
             internalName: attr.internalName,
             m1Name: attr.m1Name,
-            sixWTag: attr.sixWTag,
-            apiKey: (attr.sixWTag && String(attr.sixWTag).trim() !== '') ? attr.sixWTag : `dsmfg:${attr.m1Name}`
+            sixWTag: attr.sixWTag
           };
         });
-      allCustomColumns.push(...mbomAttrs);
+      mbomAttrs.forEach(a => {
+        if (seenKeys.has(a.key)) {
+          // Same key exists in EBOM too — mark as shared so it's sent for both expand types
+          const existing = allCustomColumns.find(c => c.key === a.key);
+          if (existing) existing.category = 'shared_custom';
+        } else {
+          seenKeys.add(a.key);
+          allCustomColumns.push(a);
+        }
+      });
       console.log('MBOM Custom Attributes loaded:', mbomAttrs.length);
     }
     
@@ -610,19 +618,20 @@ const selectObjectFields = computed(() => {
   let apiColumns = selectedColumns.value.filter(col => !col.startsWith('_'));
   
   // itemType'a göre karşı tarafın custom attribute'larını filtrele
-  // EBOM expand ederken MBOM attribute'ları gönderilmemeli ve tersi
+  // EBOM expand ederken MBOM-only attribute'ları gönderilmemeli ve tersi
+  // shared_custom olanlar her iki taraf için de gönderilir
   if (itemType.value === 'CreateAssembly') {
-    // MBOM için: EBOM custom attribute'larını çıkar
-    const ebomCustomKeys = customColumns.value
+    // MBOM için: pure EBOM custom attribute'larını çıkar (shared hariç)
+    const ebomOnlyKeys = customColumns.value
       .filter(c => c.category === 'ebom_custom')
       .map(c => c.key);
-    apiColumns = apiColumns.filter(col => !ebomCustomKeys.includes(col));
+    apiColumns = apiColumns.filter(col => !ebomOnlyKeys.includes(col));
   } else {
-    // EBOM için: MBOM custom attribute'larını çıkar
-    const mbomCustomKeys = customColumns.value
+    // EBOM için: pure MBOM custom attribute'larını çıkar (shared hariç)
+    const mbomOnlyKeys = customColumns.value
       .filter(c => c.category === 'mbom_custom')
       .map(c => c.key);
-    apiColumns = apiColumns.filter(col => !mbomCustomKeys.includes(col));
+    apiColumns = apiColumns.filter(col => !mbomOnlyKeys.includes(col));
   }
   
   return [...new Set([...baseFields, ...apiColumns])];
@@ -637,11 +646,6 @@ const expandBOM = async () => {
 
   const normalizeSelectObjectAttribute = (attr) => {
     let a = String(attr || '').trim();
-    // If it's our internal ebom:/mbom: key, use the precomputed apiKey
-    if (a.startsWith('ebom:') || a.startsWith('mbom:')) {
-      const match = customColumns.value.find(c => c.key === a);
-      if (match && match.apiKey) return match.apiKey;
-    }
     // Progressive expand expects extension attributes as ds6wg:XP_* (see cvservlet examples)
     if (a.startsWith('XP_')) a = `ds6wg:${a}`;
     return a;
@@ -763,29 +767,6 @@ const expandBOM = async () => {
     if (!response?.results?.length) {
       error.value = 'Product structure not found or empty.';
       return;
-    }
-    
-    // Map API keys to internal keys for custom attributes
-    const apiKeyToInternalKey = new Map();
-    customColumns.value.forEach(col => {
-      if (col.apiKey && col.key) {
-        apiKeyToInternalKey.set(col.apiKey, col.key);
-      }
-    });
-    
-    // Transform response results to use internal keys
-    if (apiKeyToInternalKey.size > 0) {
-      response.results = response.results.map(item => {
-        const transformed = { ...item };
-        apiKeyToInternalKey.forEach((internalKey, apiKey) => {
-          if (apiKey in item) {
-            transformed[internalKey] = item[apiKey];
-            // Keep original for backward compatibility
-            // delete transformed[apiKey];
-          }
-        });
-        return transformed;
-      });
     }
     
     result.value = response;
