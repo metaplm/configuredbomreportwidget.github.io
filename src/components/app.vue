@@ -765,6 +765,29 @@ const expandBOM = async () => {
       return;
     }
     
+    // Map API keys to internal keys for custom attributes
+    const apiKeyToInternalKey = new Map();
+    customColumns.value.forEach(col => {
+      if (col.apiKey && col.key) {
+        apiKeyToInternalKey.set(col.apiKey, col.key);
+      }
+    });
+    
+    // Transform response results to use internal keys
+    if (apiKeyToInternalKey.size > 0) {
+      response.results = response.results.map(item => {
+        const transformed = { ...item };
+        apiKeyToInternalKey.forEach((internalKey, apiKey) => {
+          if (apiKey in item) {
+            transformed[internalKey] = item[apiKey];
+            // Keep original for backward compatibility
+            // delete transformed[apiKey];
+          }
+        });
+        return transformed;
+      });
+    }
+    
     result.value = response;
     
     // Recent items'a kaydet (VPMReference)
