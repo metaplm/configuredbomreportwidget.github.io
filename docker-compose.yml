@@ -9,7 +9,7 @@ services:
       - "8895:8895"
     volumes:
       # SSL sertifikaları için volume mount (proje klasöründen)
-      - ./certificates:/app/certificates:ro
+      - /home/mirac/work/certificates:/app/certificates:ro
       # Hot reload için tüm kaynak dosyalarını mount et
       - ./src:/app/src
       - ./webpack:/app/webpack
