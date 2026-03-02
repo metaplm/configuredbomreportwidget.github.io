@@ -1214,13 +1214,29 @@ const buildTree = (response) => {
     }
   });
 
-  // Root node'ları bul (hiçbir parent'ı olmayan)
+  // Root node'ları bul: Tüm path'lerde child olarak görünen VPMReference'ları topla
+  // (parent tipi ne olursa olsun - ElectricalGeometry vb. olabilir)
   const childSet = new Set();
-  parentChildCounts.forEach(childCounts => {
-    childCounts.forEach((count, childId) => childSet.add(childId));
+  paths.forEach(pathObj => {
+    const path = pathObj.Path;
+    // Path'teki her child pozisyonunu kontrol et (index 2, 4, 6, ...)
+    for (let i = 2; i < path.length; i += 2) {
+      const childId = path[i];
+      // Sadece VPMReference olan child'ları childSet'e ekle
+      if (nodeMap[childId]) {
+        childSet.add(childId);
+      }
+    }
   });
 
+  console.log('[TreeBuild] parentChildInstances size:', parentChildInstances.size);
+  console.log('[TreeBuild] parentChildCounts size:', parentChildCounts.size);
+  console.log('[TreeBuild] childSet size:', childSet.size);
+  console.log('[TreeBuild] nodeMap size:', Object.keys(nodeMap).length);
+  console.log('[TreeBuild] paths count:', paths.length);
+
   const roots = Object.values(nodeMap).filter(node => !childSet.has(node.resourceid));
+  console.log('[TreeBuild] roots count:', roots.length);
   
   // Recursive olarak children'ları düzelt ve level'ları ayarla
   let nodeCounter = 0;
