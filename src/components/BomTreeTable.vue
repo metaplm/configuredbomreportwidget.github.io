@@ -1100,11 +1100,10 @@ const buildTree = (response) => {
     const path = pathObj.Path;
     // Path: [refId, instanceId, refId, instanceId, refId, ...]
     // Çift indeksler (0,2,4...) VPMReference/3DShape, tek indeksler (1,3,5...) Instance
-    // SADECE her path'in son parent-child ilişkisini kullan (doğrudan ilişki)
-    if (path.length >= 3) {
-      const parentId = path[path.length - 3];
-      const instanceId = path[path.length - 2];
-      const childId = path[path.length - 1];
+    for (let i = 0; i < path.length - 2; i += 2) {
+      const parentId = path[i];
+      const instanceId = path[i + 1];
+      const childId = path[i + 2];
       
       const parentNode = allNodeMap[parentId];
       const childNode = allNodeMap[childId];
