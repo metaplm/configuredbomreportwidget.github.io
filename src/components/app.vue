@@ -697,7 +697,7 @@ const expandBOM = async () => {
           },
           graph: {
             descending_condition: { uql: 'availability:2' },
-            descending_condition_object: { uql: '[ds6w:globaltype]:"ds6w:Document" OR [ds6w:globaltype]:"ds6w:Part"' },
+            descending_condition_object: { uql: '[ds6w:globaltype]:"ds6w:Part"' },
             descending_condition_relation: { uql: 'NOT (flattenedtaxonomies:"reltypes/XCADBaseDependency") AND NOT (flattenedtaxonomies:"reltypes/Reference Document")' }
           }
         }]
@@ -705,14 +705,11 @@ const expandBOM = async () => {
       outputs: {
         select_object: selectObject,
         select_relation: [
-          'physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:identifier', 'ds6w:label',
-          'matrixtxt', 'ro.pgpshowextension.V_PGP_Show', 'ro.plminstance.v_treeorder'
+          'physicalid', 'ds6w:type', 'ro.plminstance.v_treeorder'
         ],
         hits: {
-          predefined_computation: ['urlstream|thumbnail|2dthb|allrefs', 'icons'],
-          with_units: 1
+          with_units: 0
         },
-        select_pgp: ['show', 'hide'],
         format: 'entity_relation_occurrence'
       }
     };
