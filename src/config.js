@@ -135,6 +135,15 @@ export const getMfgItemExpandUrl = (physicalId) => {
 };
 
 /**
+ * MfgItem Details API URL'i oluşturur
+ * @param {string} physicalId - MfgItem physical ID
+ * @returns {string} API URL
+ */
+export const getMfgItemDetailsUrl = (physicalId) => {
+  return `/resources/v1/modeler/dsmfg/dsmfg:MfgItem/${physicalId}?xrequestedwith=xmlhttprequest&$mask=dsmfg:MfgItemMask.Details`;
+};
+
+/**
  * MfgItem Configured (Model) API URL'i oluşturur
  * @param {string} physicalId - MfgItem physical ID
  * @returns {string} API URL

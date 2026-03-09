@@ -215,7 +215,7 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
-import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemFilteredExpandUrl } from '../config.js';
+import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemDetailsUrl, getMfgItemFilteredExpandUrl } from '../config.js';
 
 const APP_VERSION = 'v1.2';
 
@@ -228,6 +228,7 @@ const isDragOver = ref(false);
 const dragCounter = ref(0);
 const warningMessage = ref(null);
 const warningTimeout = ref(null);
+const mfgDetailsCache = new Map();
 
 // Multi-item selection dialog
 const showItemSelector = ref(false);
@@ -833,10 +834,20 @@ const expandMfgBOM = async () => {
       error.value = 'Manufacturing structure not found or empty.';
       return;
     }
+
+    const mbomSelectedCustomColumns = customColumns.value.filter(col => {
+      if (col.category !== 'mbom_custom' && col.category !== 'shared_custom') return false;
+      return selectedColumns.value.includes(col.key);
+    });
+
+    let mfgDetailsMap = new Map();
+    if (mbomSelectedCustomColumns.length > 0) {
+      mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns);
+    }
     
     // MfgItem response'unu VPMReference formatına dönüştür
     // Böylece BomTreeTable aynı buildTree fonksiyonunu kullanabilir
-    const transformedResults = transformMfgItemResponse(members);
+    const transformedResults = transformMfgItemResponse(members, mfgDetailsMap, mbomSelectedCustomColumns);
     
     result.value = {
       results: transformedResults,
@@ -856,8 +867,87 @@ const expandMfgBOM = async () => {
   }
 };
 
+const loadMfgItemDetailsForMembers = async (members, mbomColumns = []) => {
+  const detailsMap = new Map();
+  const mfgMainTypes = new Set(['CreateAssembly', 'ElementaryEndItem', 'Provide', 'CreateKit', 'CreateMaterial', 'ProcessContinuousProvide']);
+  const itemIds = [...new Set(
+    members
+      .filter(item => item?.id && item?.type && mfgMainTypes.has(item.type))
+      .map(item => item.id)
+  )];
+
+  if (!itemIds.length || !mbomColumns.length) {
+    return detailsMap;
+  }
+
+  const concurrency = 8;
+  let index = 0;
+
+  const worker = async () => {
+    while (index < itemIds.length) {
+      const currentIndex = index++;
+      const itemId = itemIds[currentIndex];
+      try {
+        const detailData = await getMfgItemDetails(itemId);
+        if (detailData) {
+          detailsMap.set(itemId, detailData);
+        }
+      } catch (err) {
+        console.warn(`Failed to load MfgItem details for ${itemId}:`, err);
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, itemIds.length) }, () => worker()));
+  console.log('MfgItem details loaded for MBOM custom attributes:', detailsMap.size, '/', itemIds.length);
+  return detailsMap;
+};
+
+const getMfgItemDetails = async (itemId) => {
+  if (mfgDetailsCache.has(itemId)) {
+    return mfgDetailsCache.get(itemId);
+  }
+
+  const requestPromise = Platform3DSpace.call3DSpace({
+    url: getMfgItemDetailsUrl(itemId),
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    },
+    type: 'json'
+  }).then(response => {
+    const member = response?.member?.[0] || null;
+    return member;
+  }).catch(err => {
+    mfgDetailsCache.delete(itemId);
+    throw err;
+  });
+
+  mfgDetailsCache.set(itemId, requestPromise);
+  return requestPromise;
+};
+
+const buildMfgCustomAttributeValues = (detailItem, mbomColumns = []) => {
+  const values = {};
+  if (!detailItem || !mbomColumns.length) return values;
+
+  const enterpriseAttrs = detailItem['dsmfg:MfgItemEnterpriseAttributes'] || {};
+  mbomColumns.forEach(col => {
+    const internalName = String(col.internalName || '').trim();
+    const byInternalName = internalName ? enterpriseAttrs[internalName] : undefined;
+    const byLowerInternalName = internalName ? enterpriseAttrs[internalName.toLowerCase()] : undefined;
+    const byM1Name = col.m1Name ? enterpriseAttrs[col.m1Name] : undefined;
+    const rawValue = byInternalName ?? byLowerInternalName ?? byM1Name;
+    if (rawValue !== undefined) {
+      values[col.key] = rawValue;
+    }
+  });
+
+  return values;
+};
+
 // MfgItem response'unu VPMReference formatına dönüştür
-const transformMfgItemResponse = (members) => {
+const transformMfgItemResponse = (members, mfgDetailsMap = new Map(), mbomColumns = []) => {
   const results = [];
   const pathObjects = [];
   
@@ -887,6 +977,8 @@ const transformMfgItemResponse = (members) => {
         };
         results.push(transformed);
       } else {
+        const detailItem = mfgDetailsMap.get(item.id);
+        const customAttributeValues = buildMfgCustomAttributeValues(detailItem, mbomColumns);
         // Ana node (CreateAssembly, ElementaryEndItem, Provide, vb.)
         const transformed = {
           resourceid: item.id,
@@ -903,6 +995,7 @@ const transformMfgItemResponse = (members) => {
           'ds6w:project': item.collabspace || '',
           // MfgItem'a özgü alanlar
           'dsmfg:manufacturingIntent': item.manufacturingIntent || '',
+          ...customAttributeValues,
           // Orijinal veriyi sakla
           _original: item
         };
@@ -1007,7 +1100,15 @@ const onApplyConfiguration = async (configData) => {
     // itemType'a göre dönüşüm yap
     let transformedResults;
     if (itemType.value === 'CreateAssembly') {
-      transformedResults = transformMfgItemResponse(members);
+      const mbomSelectedCustomColumns = customColumns.value.filter(col => {
+        if (col.category !== 'mbom_custom' && col.category !== 'shared_custom') return false;
+        return selectedColumns.value.includes(col.key);
+      });
+      let mfgDetailsMap = new Map();
+      if (mbomSelectedCustomColumns.length > 0) {
+        mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns);
+      }
+      transformedResults = transformMfgItemResponse(members, mfgDetailsMap, mbomSelectedCustomColumns);
     } else {
       // VPMReference için mevcut dönüşüm
       transformedResults = [];
