@@ -1714,6 +1714,11 @@ const getNodeIcon = (node) => {
     case 'ProcessInstanceContinuous':
     case 'Continuous':
       return getImagePath('Continuous.png');
+    case 'ElectricalGeometry':
+    case 'Electrical Geometry':
+    case 'ElectricalBranchGeometry':
+    case 'Electrical Branch':
+      return getImagePath('ElectricalGeometry.png');
     // VPMReference fallback
     case 'VPMReference':
     case 'Product':
