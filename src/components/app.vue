@@ -218,7 +218,7 @@ import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
 import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemDetailsUrl, getMfgItemFilteredExpandUrl, getMfgItemBulkFetchUrl } from '../config.js';
 
-const APP_VERSION = 'v1.3.2';
+const APP_VERSION = 'v1.3.3';
 
 const loading = ref(false);
 const loadingMessage = ref('');
