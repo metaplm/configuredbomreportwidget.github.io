@@ -889,7 +889,7 @@ const loadMfgItemDetailsForMembers = async (members, mbomColumns = [], onProgres
       .map(item => item.id)
   )];
 
-  if (!itemIds.length || !mbomColumns.length) {
+  if (!itemIds.length) {
     return detailsMap;
   }
 
