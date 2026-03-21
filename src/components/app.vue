@@ -847,7 +847,8 @@ const expandMfgBOM = async () => {
     if (mbomSelectedCustomColumns.length > 0) {
       loadingMessage.value = 'Loading item details...';
       mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns, (loaded, total) => {
-        loadingMessage.value = `Loading item details... ${loaded} / ${total}`;
+        const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
+        loadingMessage.value = `Loading item details... ${pct}%`;
       });
     }
     
@@ -1034,6 +1035,8 @@ const transformMfgItemResponse = (members, mfgDetailsMap = new Map(), mbomColumn
           'ds6w:responsible': item.owner || '',
           'ds6w:organization': item.organization || '',
           'ds6w:project': item.collabspace || '',
+          // MfgItem part number (EBOM'daki ds6wg:EnterpriseExtension.V_PartNumber ile aynı key)
+          'ds6wg:EnterpriseExtension.V_PartNumber': item['dsmfg:EnterpriseReference']?.partNumber || '',
           // MfgItem'a özgü alanlar
           'dsmfg:manufacturingIntent': item.manufacturingIntent || '',
           ...customAttributeValues,
