@@ -30,7 +30,9 @@ export const loadConfig = async (forceReload = false) => {
   }
   
   try {
-    const configUrl = `./config.json?_t=${Date.now()}`;
+    /* eslint-disable no-undef */
+    const base = typeof __webpack_public_path__ !== 'undefined' ? __webpack_public_path__ : './';
+    const configUrl = `${base}config.json?_t=${Date.now()}`;
     console.log('[Config] Fetching config from:', configUrl);
     
     const response = await fetch(configUrl);

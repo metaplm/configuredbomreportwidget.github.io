@@ -3,6 +3,9 @@ const common = require("./webpack.config.common.js");
 
 module.exports = merge(common, {
     mode: "production",
+    output: {
+        publicPath: "https://metaplm.github.io/configuredbomreportwidget.github.io/"
+    },
     performance: {
         maxAssetSize: 1000000
     },
