@@ -116,6 +116,7 @@
                 <!-- Loading overlay -->
                 <div v-if="loading" class="loading-overlay">
                   <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+                  <span v-if="loadingMessage" class="loading-message">{{ loadingMessage }}</span>
                 </div>
 
                 <!-- Drop hint overlay (not loading) -->
@@ -215,11 +216,12 @@ import { ref, computed, onMounted } from 'vue';
 import Platform3DSpace from '../js/Platform3DSpace.js';
 import BomTreeTable from './BomTreeTable.vue';
 import ColumnSelector from './ColumnSelector.vue';
-import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemDetailsUrl, getMfgItemFilteredExpandUrl } from '../config.js';
+import config, { loadConfig, getCustomAttributesUrl, getBomExpandUrl, getMfgItemExpandUrl, getMfgItemDetailsUrl, getMfgItemFilteredExpandUrl, getMfgItemBulkFetchUrl } from '../config.js';
 
 const APP_VERSION = 'v1.3.1';
 
 const loading = ref(false);
+const loadingMessage = ref('');
 const loadingAttributes = ref(false);
 const result = ref(null);
 const error = ref(null);
@@ -788,6 +790,7 @@ const expandBOM = async () => {
 // ==================== MfgItem (CreateAssembly) Expand ====================
 const expandMfgBOM = async () => {
   loading.value = true;
+  loadingMessage.value = 'Expanding manufacturing structure...';
   error.value = null;
   result.value = null;
 
@@ -842,7 +845,10 @@ const expandMfgBOM = async () => {
 
     let mfgDetailsMap = new Map();
     if (mbomSelectedCustomColumns.length > 0) {
-      mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns);
+      loadingMessage.value = 'Loading item details...';
+      mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns, (loaded, total) => {
+        loadingMessage.value = `Loading item details... ${loaded} / ${total}`;
+      });
     }
     
     // MfgItem response'unu VPMReference formatına dönüştür
@@ -864,10 +870,13 @@ const expandMfgBOM = async () => {
     console.error('MfgItem BOM Expand Error:', err);
   } finally {
     loading.value = false;
+    loadingMessage.value = '';
   }
 };
 
-const loadMfgItemDetailsForMembers = async (members, mbomColumns = []) => {
+const BULK_CHUNK_SIZE = 50;
+
+const loadMfgItemDetailsForMembers = async (members, mbomColumns = [], onProgress = null) => {
   const detailsMap = new Map();
   const mfgMainTypes = new Set(['CreateAssembly', 'ElementaryEndItem', 'Provide', 'CreateKit', 'CreateMaterial', 'ProcessContinuousProvide']);
   const itemIds = [...new Set(
@@ -880,26 +889,58 @@ const loadMfgItemDetailsForMembers = async (members, mbomColumns = []) => {
     return detailsMap;
   }
 
-  const concurrency = 8;
-  let index = 0;
+  const total = itemIds.length;
+  let loaded = 0;
 
-  const worker = async () => {
-    while (index < itemIds.length) {
-      const currentIndex = index++;
-      const itemId = itemIds[currentIndex];
+  // ID listesini chunk'lara böl
+  const chunks = [];
+  for (let i = 0; i < itemIds.length; i += BULK_CHUNK_SIZE) {
+    chunks.push(itemIds.slice(i, i + BULK_CHUNK_SIZE));
+  }
+
+  for (const chunk of chunks) {
+    let fallbackIds = [];
+    try {
+      const response = await Platform3DSpace.call3DSpace({
+        url: getMfgItemBulkFetchUrl(),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: chunk,
+        type: 'json'
+      });
+
+      // Gelen member'ları işle (200 veya 207)
+      for (const item of response?.member || []) {
+        if (item?.id) {
+          detailsMap.set(item.id, item);
+          mfgDetailsCache.set(item.id, Promise.resolve(item));
+        }
+      }
+
+      // 207: index'de olmayan ID'ler fallback'e gidecek
+      fallbackIds = response?.nonmembers || [];
+      loaded += chunk.length - fallbackIds.length;
+      onProgress?.(loaded, total);
+
+    } catch (err) {
+      console.warn('Bulk fetch failed for chunk, falling back to individual requests:', err);
+      fallbackIds = chunk;
+    }
+
+    // Fallback: index'siz veya hatalı item'lar için tekli GET
+    for (const itemId of fallbackIds) {
       try {
         const detailData = await getMfgItemDetails(itemId);
-        if (detailData) {
-          detailsMap.set(itemId, detailData);
-        }
+        if (detailData) detailsMap.set(itemId, detailData);
       } catch (err) {
         console.warn(`Failed to load MfgItem details for ${itemId}:`, err);
       }
+      loaded++;
+      onProgress?.(loaded, total);
     }
-  };
+  }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, itemIds.length) }, () => worker()));
-  console.log('MfgItem details loaded for MBOM custom attributes:', detailsMap.size, '/', itemIds.length);
+  console.log('MfgItem details loaded for MBOM custom attributes:', detailsMap.size, '/', total);
   return detailsMap;
 };
 
@@ -931,7 +972,7 @@ const buildMfgCustomAttributeValues = (detailItem, mbomColumns = []) => {
   const values = {};
   if (!detailItem || !mbomColumns.length) return values;
 
-  const enterpriseAttrs = detailItem['dsmfg:MfgItemEnterpriseAttributes'] || {};
+  const enterpriseAttrs = detailItem['dsmfg:MfgItemEnterpriseAttributes'] || detailItem['dsmfg:MfgEnterpriseAttributes'] || {};
   mbomColumns.forEach(col => {
     const internalName = String(col.internalName || '').trim();
     const byInternalName = internalName ? enterpriseAttrs[internalName] : undefined;
@@ -1491,6 +1532,12 @@ body {
   justify-content: center;
   background: rgba(255, 255, 255, 0.85);
   z-index: 20;
+}
+
+.loading-message {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #555;
 }
 
 /* Drop Hint Overlay */

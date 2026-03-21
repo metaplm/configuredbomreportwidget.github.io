@@ -144,6 +144,14 @@ export const getMfgItemDetailsUrl = (physicalId) => {
 };
 
 /**
+ * MfgItem Bulk Fetch API URL'i oluşturur (Indexed data only)
+ * @returns {string} API URL
+ */
+export const getMfgItemBulkFetchUrl = () => {
+  return `/resources/v1/modeler/dsmfg/dsmfg:MfgItem/bulkfetch?xrequestedwith=xmlhttprequest&$mask=dsmfg:MfgItemMask.Details`;
+};
+
+/**
  * MfgItem Configured (Model) API URL'i oluşturur
  * @param {string} physicalId - MfgItem physical ID
  * @returns {string} API URL
