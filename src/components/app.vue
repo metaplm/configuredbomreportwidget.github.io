@@ -843,8 +843,11 @@ const expandMfgBOM = async () => {
       return selectedColumns.value.includes(col.key);
     });
 
+    const needsDetails = mbomSelectedCustomColumns.length > 0 ||
+      selectedColumns.value.includes('ds6wg:EnterpriseExtension.V_PartNumber');
+
     let mfgDetailsMap = new Map();
-    if (mbomSelectedCustomColumns.length > 0) {
+    if (needsDetails) {
       loadingMessage.value = 'Loading item details...';
       mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns, (loaded, total) => {
         const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
@@ -1035,8 +1038,8 @@ const transformMfgItemResponse = (members, mfgDetailsMap = new Map(), mbomColumn
           'ds6w:responsible': item.owner || '',
           'ds6w:organization': item.organization || '',
           'ds6w:project': item.collabspace || '',
-          // MfgItem part number (EBOM'daki ds6wg:EnterpriseExtension.V_PartNumber ile aynı key)
-          'ds6wg:EnterpriseExtension.V_PartNumber': item['dsmfg:EnterpriseReference']?.partNumber || '',
+          // MfgItem part number - bulkfetch detailItem'dan al, yoksa expand item'dan fallback
+          'ds6wg:EnterpriseExtension.V_PartNumber': detailItem?.['dsmfg:EnterpriseReference']?.partNumber || item['dsmfg:EnterpriseReference']?.partNumber || '',
           // MfgItem'a özgü alanlar
           'dsmfg:manufacturingIntent': item.manufacturingIntent || '',
           ...customAttributeValues,
