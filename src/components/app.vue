@@ -1151,8 +1151,10 @@ const onApplyConfiguration = async (configData) => {
         if (col.category !== 'mbom_custom' && col.category !== 'shared_custom') return false;
         return selectedColumns.value.includes(col.key);
       });
+      const needsDetails = mbomSelectedCustomColumns.length > 0 ||
+        selectedColumns.value.includes('ds6wg:EnterpriseExtension.V_PartNumber');
       let mfgDetailsMap = new Map();
-      if (mbomSelectedCustomColumns.length > 0) {
+      if (needsDetails) {
         mfgDetailsMap = await loadMfgItemDetailsForMembers(members, mbomSelectedCustomColumns);
       }
       transformedResults = transformMfgItemResponse(members, mfgDetailsMap, mbomSelectedCustomColumns);
