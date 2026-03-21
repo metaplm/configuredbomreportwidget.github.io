@@ -1058,8 +1058,8 @@ const buildTree = (response) => {
     analysisTypes = ['CreateAssembly', 'ElementaryEndItem', 'Provide', 'CreateKit', 'CreateMaterial', 'ProcessContinuousProvide', 'dsmfg:MfgItem'];
     instanceTypes = ['DELFmiFunctionIdentifiedInstance', 'ProcessInstanceContinuous', 'dsmfg:ProcessInstanceContinuous'];
   } else {
-    // VPMReference için: VPMReference ve 3DShape
-    analysisTypes = ['VPMReference', '3DShape'];
+    // VPMReference için: VPMReference, 3DShape ve elektrik geometri tipleri
+    analysisTypes = ['VPMReference', '3DShape', 'ElectricalGeometry', 'ElectricalBranchGeometry'];
     instanceTypes = ['VPMInstance', 'VPMRepInstance'];
   }
   
@@ -1161,6 +1161,10 @@ const buildTree = (response) => {
         default:
           node.displayType = nodeType || 'MfgItem';
       }
+    } else if (nodeType === 'ElectricalGeometry') {
+      node.displayType = 'Electrical Geometry';
+    } else if (nodeType === 'ElectricalBranchGeometry') {
+      node.displayType = 'Electrical Branch';
     } else if (nodeType === 'VPMReference') {
       // VPMReference için Part/Product belirleme
       const childTypes = parentChildTypes.get(node.resourceid);
@@ -1187,9 +1191,9 @@ const buildTree = (response) => {
   
   // Ana tipleri içeren nodeMap oluştur (VPMReference veya MfgItem tipleri)
   const nodeMap = {};
-  const mainTypes = responseItemType === 'CreateAssembly' 
+  const mainTypes = responseItemType === 'CreateAssembly'
     ? ['CreateAssembly', 'ElementaryEndItem', 'Provide', 'CreateKit', 'CreateMaterial', 'ProcessContinuousProvide', 'dsmfg:MfgItem']
-    : ['VPMReference'];
+    : ['VPMReference', 'ElectricalGeometry', 'ElectricalBranchGeometry'];
     
   Object.entries(allNodeMap).forEach(([id, node]) => {
     if (node && mainTypes.includes(node['ds6w:type'])) {
