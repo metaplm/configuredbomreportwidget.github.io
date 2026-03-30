@@ -2,7 +2,7 @@
   "tenant": "R1132101868454",
   "attributeType": "VPMReference",
   "endpoints": {
-    "bomExpand": "/enovia/cvservlet/progressiveexpand/v2",
+    "bomExpand": "/cvservlet/progressiveexpand/v2",
     "customAttributes": "/resources/ParamWS/datamodel/listofattributesfortype",
     "ecosystem": "/resources/enorelnav/v2/navigate/getEcosystem"
   },
