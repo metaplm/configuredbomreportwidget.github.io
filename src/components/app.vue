@@ -355,6 +355,7 @@ const getPlaceholderTitleWidth = (i) => {
 // OOTB Attributes - Sabit liste (label zorunlu, kapatılamaz)
 const ootbColumns = [
   { key: 'ds6w:label', label: 'Title', required: true, category: 'ootb' },
+  { key: 'name', label: 'Name', required: false, category: 'ootb' },
   { key: '_qty', label: 'Qty', required: false, category: 'ootb' },
   { key: '_subqty', label: 'Sub Qty', required: false, category: 'ootb' },
   { key: '_totalqty', label: 'Total Qty', required: false, category: 'ootb' },
@@ -619,7 +620,7 @@ onMounted(async () => {
 const selectObjectFields = computed(() => {
   // ds6wg:revision her zaman dahil (baykar_revision fallback için gerekli)
   // ds6wg:EnterpriseExtension.V_PartNumber her zaman dahil (Parent Product için gerekli)
-  const baseFields = ['physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision', 'ds6wg:EnterpriseExtension.V_PartNumber'];
+  const baseFields = ['physicalid', 'name', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision', 'ds6wg:EnterpriseExtension.V_PartNumber'];
   
   // _qty gibi internal key'leri filtrele (API'ye gönderilmemeli)
   let apiColumns = selectedColumns.value.filter(col => !col.startsWith('_'));
@@ -1018,6 +1019,7 @@ const transformMfgItemResponse = (members, mfgDetailsMap = new Map(), mbomColumn
           to: item.reference,
           'ds6w:label': item.name || '',
           'ds6w:identifier': item.name || '',
+          name: item.name || '',
           _original: item
         };
         results.push(transformed);
@@ -1031,6 +1033,7 @@ const transformMfgItemResponse = (members, mfgDetailsMap = new Map(), mbomColumn
           'ds6w:globalType': item.type,
           'ds6w:label': item.title || item.name || '',
           'ds6w:identifier': item.name || '',
+          name: item.name || '',
           'ds6w:status': item.state || '',
           'ds6wg:revision': item.revision || '',
           'ds6w:created': item.created || '',
