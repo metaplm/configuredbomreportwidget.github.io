@@ -620,10 +620,11 @@ onMounted(async () => {
 const selectObjectFields = computed(() => {
   // ds6wg:revision her zaman dahil (baykar_revision fallback için gerekli)
   // ds6wg:EnterpriseExtension.V_PartNumber her zaman dahil (Parent Product için gerekli)
-  const baseFields = ['physicalid', 'name', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision', 'ds6wg:EnterpriseExtension.V_PartNumber'];
+  const baseFields = ['physicalid', 'ds6w:globalType', 'ds6w:type', 'ds6w:composed', 'ds6w:isLastRevision', 'ds6wg:revision', 'ds6wg:EnterpriseExtension.V_PartNumber'];
   
-  // _qty gibi internal key'leri filtrele (API'ye gönderilmemeli)
-  let apiColumns = selectedColumns.value.filter(col => !col.startsWith('_'));
+  // _qty gibi internal key'leri ve EBOM expand API'sinin desteklemediği key'leri filtrele
+  const unsupportedByExpandApi = ['name'];
+  let apiColumns = selectedColumns.value.filter(col => !col.startsWith('_') && !unsupportedByExpandApi.includes(col));
   
   // itemType'a göre karşı tarafın custom attribute'larını filtrele
   // EBOM expand ederken MBOM-only attribute'ları gönderilmemeli ve tersi
